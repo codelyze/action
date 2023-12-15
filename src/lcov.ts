@@ -6,7 +6,7 @@ interface LcovGFile {
   lines: number[]
 }
 
-export const parseLcov = (data: string): Promise<LcovFile[]> =>
+export const parseLcov = async (data: string): Promise<LcovFile[]> =>
   new Promise((resolve, reject) =>
     lcov(data, (err: string | Error | null, res?: LcovFile[]) => {
       if (err) {
@@ -16,17 +16,17 @@ export const parseLcov = (data: string): Promise<LcovFile[]> =>
     })
   )
 
-export const calculate = (lcov: LcovFile[]): number => {
+export const calculate = (lcovData: LcovFile[]): number => {
   let hit = 0
   let found = 0
-  for (const entry of lcov) {
+  for (const entry of lcovData) {
     hit += entry.lines.hit
     found += entry.lines.found
   }
   return parseFloat(((hit / found) * 100).toFixed(2))
 }
 
-const groupByFile = (lcovData: LcovFile[]) => {
+const groupByFile = (lcovData: LcovFile[]): LcovGFile[] => {
   const response: LcovGFile[] = []
   for (const fileData of lcovData) {
     const lines = fileData.lines.details
@@ -43,7 +43,13 @@ const groupByFile = (lcovData: LcovFile[]) => {
   return response
 }
 
-export const parse = async (path: string) => {
+interface ParseResult {
+  data: LcovFile[]
+  byFile: LcovGFile[]
+  percentage: number
+}
+
+export const parse = async (path: string): Promise<ParseResult> => {
   const file = await readFile(path, 'utf8')
   const data = await parseLcov(file)
   const byFile = groupByFile(data)
