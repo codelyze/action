@@ -1834,6 +1834,139 @@ function isLoopbackAddress(host) {
 
 /***/ }),
 
+/***/ 7454:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/*
+Copyright (c) 2012, Yahoo! Inc. All rights reserved.
+Code licensed under the BSD License:
+http://yuilibrary.com/license/
+*/
+
+var fs = __nccwpck_require__(7147),
+    path = __nccwpck_require__(1017);
+
+/* istanbul ignore next */
+var exists = fs.exists || path.exists;
+
+var walkFile = function(str, cb) {
+    var data = [], item;
+
+    [ 'end_of_record' ].concat(str.split('\n')).forEach(function(line) {
+        line = line.trim();
+        var allparts = line.split(':'),
+            parts = [allparts.shift(), allparts.join(':')],
+            lines, fn;
+
+        switch (parts[0].toUpperCase()) {
+            case 'TN':
+                item.title = parts[1].trim();
+                break;
+            case 'SF':
+                item.file = parts.slice(1).join(':').trim();
+                break;
+            case 'FNF':
+                item.functions.found = Number(parts[1].trim());
+                break;
+            case 'FNH':
+                item.functions.hit = Number(parts[1].trim());
+                break;
+            case 'LF':
+                item.lines.found = Number(parts[1].trim());
+                break;
+            case 'LH':
+                item.lines.hit = Number(parts[1].trim());
+                break;
+            case 'DA':
+                lines = parts[1].split(',');
+                item.lines.details.push({
+                    line: Number(lines[0]),
+                    hit: Number(lines[1])
+                });
+                break;
+            case 'FN':
+                fn = parts[1].split(',');
+                item.functions.details.push({
+                    name: fn[1],
+                    line: Number(fn[0])
+                });
+                break;
+            case 'FNDA':
+                fn = parts[1].split(',');
+                item.functions.details.some(function(i, k) {
+                    if (i.name === fn[1] && i.hit === undefined) {
+                        item.functions.details[k].hit = Number(fn[0]);
+                        return true;
+                    }
+                });
+                break;
+            case 'BRDA':
+                fn = parts[1].split(',');
+                item.branches.details.push({
+                    line: Number(fn[0]),
+                    block: Number(fn[1]),
+                    branch: Number(fn[2]),
+                    taken: ((fn[3] === '-') ? 0 : Number(fn[3]))
+                });
+                break;
+            case 'BRF':
+                item.branches.found = Number(parts[1]);
+                break;
+            case 'BRH':
+                item.branches.hit = Number(parts[1]);
+                break;
+        }
+
+        if (line.indexOf('end_of_record') > -1) {
+            data.push(item);
+            item = {
+              lines: {
+                  found: 0,
+                  hit: 0,
+                  details: []
+              },
+              functions: {
+                  hit: 0,
+                  found: 0,
+                  details: []
+              },
+              branches: {
+                hit: 0,
+                found: 0,
+                details: []
+              }
+            };
+        }
+    });
+
+    data.shift();
+
+    if (data.length) {
+        cb(null, data);
+    } else {
+        cb('Failed to parse string');
+    }
+};
+
+var parse = function(file, cb) {
+    exists(file, function(x) {
+        if (!x) {
+            return walkFile(file, cb);
+        }
+        fs.readFile(file, 'utf8', function(err, str) {
+            walkFile(str, cb);
+        });
+    });
+
+};
+
+
+module.exports = parse;
+module.exports.source = walkFile;
+
+
+/***/ }),
+
 /***/ 4294:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -24702,6 +24835,66 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 4888:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parse = exports.calculate = exports.parseLcov = void 0;
+const lcov_parse_1 = __importDefault(__nccwpck_require__(7454));
+const promises_1 = __nccwpck_require__(3292);
+const parseLcov = (data) => new Promise((resolve, reject) => (0, lcov_parse_1.default)(data, (err, res) => {
+    if (err) {
+        return reject(err);
+    }
+    resolve(res ?? []);
+}));
+exports.parseLcov = parseLcov;
+const calculate = (lcov) => {
+    let hit = 0;
+    let found = 0;
+    for (const entry of lcov) {
+        hit += entry.lines.hit;
+        found += entry.lines.found;
+    }
+    return parseFloat(((hit / found) * 100).toFixed(2));
+};
+exports.calculate = calculate;
+const groupByFile = (lcovData) => {
+    const response = [];
+    for (const fileData of lcovData) {
+        const lines = fileData.lines.details
+            .filter(({ hit }) => hit === 0)
+            .map(({ line }) => line);
+        if (lines.length > 0) {
+            response.push({
+                file: fileData.file,
+                lines
+            });
+        }
+    }
+    return response;
+};
+const parse = async (path) => {
+    const file = await (0, promises_1.readFile)(path, 'utf8');
+    const data = await (0, exports.parseLcov)(file);
+    const byFile = groupByFile(data);
+    const percentage = (0, exports.calculate)(data);
+    return {
+        data,
+        byFile,
+        percentage
+    };
+};
+exports.parse = parse;
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -24733,55 +24926,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const wait_1 = __nccwpck_require__(5259);
+const lcov_1 = __nccwpck_require__(4888);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
     try {
-        const ms = core.getInput('milliseconds');
-        // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-        core.debug(`Waiting ${ms} milliseconds ...`);
-        // Log the current timestamp, wait, then log the new timestamp
-        core.debug(new Date().toTimeString());
-        await (0, wait_1.wait)(parseInt(ms, 10));
-        core.debug(new Date().toTimeString());
-        // Set outputs for other workflow steps to use
-        core.setOutput('time', new Date().toTimeString());
+        // const token = core.getInput('token')
+        const path = core.getInput('path');
+        const { percentage } = await (0, lcov_1.parse)(path);
+        core.debug(`percentage ${percentage}`);
+        core.setOutput('percentage', percentage);
     }
     catch (error) {
-        // Fail the workflow run if an error occurs
-        if (error instanceof Error)
+        if (error instanceof Error) {
             core.setFailed(error.message);
+        }
     }
 }
 exports.run = run;
-
-
-/***/ }),
-
-/***/ 5259:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.wait = void 0;
-/**
- * Wait for a number of milliseconds.
- * @param milliseconds The number of milliseconds to wait.
- * @returns {Promise<string>} Resolves with 'done!' after the wait is over.
- */
-async function wait(milliseconds) {
-    return new Promise(resolve => {
-        if (isNaN(milliseconds)) {
-            throw new Error('milliseconds not a number');
-        }
-        setTimeout(() => resolve('done!'), milliseconds);
-    });
-}
-exports.wait = wait;
 
 
 /***/ }),
@@ -24847,6 +25011,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 3292:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 
