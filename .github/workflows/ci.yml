@@ -57,7 +57,7 @@ jobs:
         uses: ./
         with:
           token: token
-          file: __tests__/fixture/a.info
+          path: __tests__/fixture/a.info
 
       - name: Print Output
         id: output
