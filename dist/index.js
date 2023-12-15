@@ -24847,17 +24847,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parse = exports.calculate = exports.parseLcov = void 0;
 const lcov_parse_1 = __importDefault(__nccwpck_require__(7454));
 const promises_1 = __nccwpck_require__(3292);
-const parseLcov = (data) => new Promise((resolve, reject) => (0, lcov_parse_1.default)(data, (err, res) => {
+const parseLcov = async (data) => new Promise((resolve, reject) => (0, lcov_parse_1.default)(data, (err, res) => {
     if (err) {
         return reject(err);
     }
     resolve(res ?? []);
 }));
 exports.parseLcov = parseLcov;
-const calculate = (lcov) => {
+const calculate = (lcovData) => {
     let hit = 0;
     let found = 0;
-    for (const entry of lcov) {
+    for (const entry of lcovData) {
         hit += entry.lines.hit;
         found += entry.lines.found;
     }
@@ -24880,7 +24880,13 @@ const groupByFile = (lcovData) => {
     return response;
 };
 const parse = async (path) => {
-    const file = await (0, promises_1.readFile)(path, 'utf8');
+    let file;
+    try {
+        file = await (0, promises_1.readFile)(path, 'utf8');
+    }
+    catch (e) {
+        throw new Error('Failed to load file');
+    }
     const data = await (0, exports.parseLcov)(file);
     const byFile = groupByFile(data);
     const percentage = (0, exports.calculate)(data);

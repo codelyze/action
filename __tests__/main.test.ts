@@ -62,10 +62,7 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(setFailedMock).toHaveBeenNthCalledWith(
-      1,
-      "ENOENT: no such file or directory, open ''"
-    )
+    expect(setFailedMock).toHaveBeenNthCalledWith(1, 'Failed to load file')
     expect(errorMock).not.toHaveBeenCalled()
   })
 })

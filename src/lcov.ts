@@ -50,7 +50,12 @@ interface ParseResult {
 }
 
 export const parse = async (path: string): Promise<ParseResult> => {
-  const file = await readFile(path, 'utf8')
+  let file
+  try {
+    file = await readFile(path, 'utf8')
+  } catch (e) {
+    throw new Error('Failed to load file')
+  }
   const data = await parseLcov(file)
   const byFile = groupByFile(data)
   const percentage = calculate(data)
