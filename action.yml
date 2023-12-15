@@ -1,23 +1,26 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Codelyze - Coverage'
+description: 'Github action to generate and upload coverage reports'
+author: 'codelyze'
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: 'heart'
-  color: 'red'
+  icon: 'check-circle'
+  color: 'green'
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  token:
+    description: 'Coverage upload token generated when project is created on codelyze.com'
     required: true
-    default: '1000'
+  file:
+    description: 'Path to coverage file to use'
+    required: true
+  annotations:
+    description: 'Show uncovered lines annotations'
+    default: false
+    required: false
 
-# Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  coverage:
+    description: 'Total coverage'
 
 runs:
   using: node20
