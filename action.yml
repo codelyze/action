@@ -10,7 +10,7 @@ inputs:
   token:
     description: 'Coverage upload token generated when project is created on codelyze.com'
     required: true
-  file:
+  path:
     description: 'Path to coverage file to use'
     required: true
   annotations:
@@ -19,8 +19,8 @@ inputs:
     required: false
 
 outputs:
-  coverage:
-    description: 'Total coverage'
+  percentage:
+    description: 'Total percentage coverage'
 
 runs:
   using: node20

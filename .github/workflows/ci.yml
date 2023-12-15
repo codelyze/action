@@ -57,8 +57,8 @@ jobs:
         uses: ./
         with:
           token: token
-          file: ./file.lcvo
+          file: __tests__/fixture/a.info
 
       - name: Print Output
         id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+        run: echo "${{ steps.test-action.outputs.percentage }}"
