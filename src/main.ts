@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
+import * as github from '@actions/github'
 import { parse } from './lcov'
+import { coverage } from './codelyze'
 
 /**
  * The main function for the action.
@@ -7,11 +9,21 @@ import { parse } from './lcov'
  */
 export async function run(): Promise<void> {
   try {
-    // const token = core.getInput('token')
+    const token = core.getInput('token')
     const path = core.getInput('path')
-    const { percentage } = await parse(path)
-    core.debug(`percentage ${percentage}`)
-    core.setOutput('percentage', percentage)
+    const { lines } = await parse(path)
+    const { sha, ref } = github.context
+    core.debug(`percentage ${lines.rate}`)
+    core.setOutput('percentage', lines.rate)
+    const res = await coverage({
+      token,
+      branch: ref.replace('refs/heads/', ''),
+      commit: sha,
+      rate: lines.rate,
+      totalLines: lines.found,
+      coveredLines: lines.hit
+    })
+    core.debug(`result ${res}`)
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message)
