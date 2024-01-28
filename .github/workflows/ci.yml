@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   test-typescript:
@@ -43,22 +44,8 @@ jobs:
         id: npm-ci-test
         run: npm run ci-test
 
-  test-action:
-    name: GitHub Actions Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@v4
-
-      - name: Test Local Action
-        id: test-action
+      - name: Upload coverage
         uses: ./
         with:
-          token: token
-          path: __tests__/fixture/a.info
-
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.percentage }}"
+          token: ${{ secrets.CODELYZE_TOKEN }}
+          path: coverage/lcov.info

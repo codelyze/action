@@ -1,12 +1,12 @@
 import lcov, { LcovFile } from 'lcov-parse'
 import { readFile } from 'fs/promises'
 
-interface LcovGFile {
-  file: string
-  lines: number[]
-}
+export type LcovSummary = Record<
+  'lines' | 'functions' | 'branches',
+  { found: number; hit: number }
+>
 
-export const parseLcov = async (data: string): Promise<LcovFile[]> =>
+export const parse = async (data: string): Promise<LcovFile[]> =>
   new Promise((resolve, reject) =>
     lcov(data, (err: string | Error | null, res?: LcovFile[]) => {
       if (err) {
@@ -16,53 +16,35 @@ export const parseLcov = async (data: string): Promise<LcovFile[]> =>
     })
   )
 
-export const calculate = (lcovData: LcovFile[]): number => {
-  let hit = 0
-  let found = 0
-  for (const entry of lcovData) {
-    hit += entry.lines.hit
-    found += entry.lines.found
+export const summarize = (lcovData: LcovFile[]): LcovSummary => {
+  const empty = { hit: 0, found: 0 }
+  const keys: (keyof LcovSummary)[] = ['lines', 'functions', 'branches']
+  const summary: LcovSummary = {
+    lines: { ...empty },
+    functions: { ...empty },
+    branches: { ...empty }
   }
-  return parseFloat(((hit / found) * 100).toFixed(2))
-}
-
-const groupByFile = (lcovData: LcovFile[]): LcovGFile[] => {
-  const response: LcovGFile[] = []
-  for (const fileData of lcovData) {
-    const lines = fileData.lines.details
-      .filter(({ hit }) => hit === 0)
-      .map(({ line }) => line)
-
-    if (lines.length > 0) {
-      response.push({
-        file: fileData.file,
-        lines
-      })
+  for (const entry of lcovData) {
+    for (const key of keys) {
+      summary[key].hit += entry[key].hit
+      summary[key].found += entry[key].found
     }
   }
-  return response
+  return summary
 }
 
 interface ParseResult {
   data: LcovFile[]
-  byFile: LcovGFile[]
-  percentage: number
+  summary: LcovSummary
 }
 
-export const parse = async (path: string): Promise<ParseResult> => {
-  let file
-  try {
-    file = await readFile(path, 'utf8')
-  } catch (e) {
-    throw new Error('Failed to load file')
-  }
-  const data = await parseLcov(file)
-  const byFile = groupByFile(data)
-  const percentage = calculate(data)
+export const analyze = async (path: string): Promise<ParseResult> => {
+  const file = await readFile(path, 'utf8')
+  const data = await parse(file)
+  const summary = summarize(data)
 
   return {
     data,
-    byFile,
-    percentage
+    summary
   }
 }

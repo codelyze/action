@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
-import { parse } from './lcov'
+import { analyze } from './lcov'
+import { coverage } from './coverage'
+import { isErrorLike } from './util'
 
 /**
  * The main function for the action.
@@ -7,14 +9,17 @@ import { parse } from './lcov'
  */
 export async function run(): Promise<void> {
   try {
-    // const token = core.getInput('token')
     const path = core.getInput('path')
-    const { percentage } = await parse(path)
-    core.debug(`percentage ${percentage}`)
-    core.setOutput('percentage', percentage)
+    const token = core.getInput('token')
+    const ghToken = core.getInput('gh-token')
+
+    const { summary } = await analyze(path)
+
+    const rate = summary.lines.hit / summary.lines.found
+    await coverage({ token, ghToken, summary })
+
+    core.setOutput('percentage', rate)
   } catch (error) {
-    if (error instanceof Error) {
-      core.setFailed(error.message)
-    }
+    if (isErrorLike(error)) core.setFailed(error.message)
   }
 }

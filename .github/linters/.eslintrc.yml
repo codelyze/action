@@ -36,6 +36,7 @@ extends:
 
 rules:
   {
+    'eqeqeq': ['error', 'smart'],
     'camelcase': 'off',
     'eslint-comments/no-use': 'off',
     'eslint-comments/no-unused-disable': 'off',
@@ -52,7 +53,7 @@ rules:
     '@typescript-eslint/explicit-member-accessibility':
       ['error', { 'accessibility': 'no-public' }],
     '@typescript-eslint/explicit-function-return-type':
-      ['error', { 'allowExpressions': true }],
+      ['warn', { 'allowExpressions': true }],
     '@typescript-eslint/func-call-spacing': ['error', 'never'],
     '@typescript-eslint/no-array-constructor': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
