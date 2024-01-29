@@ -13,16 +13,16 @@ export async function run(): Promise<void> {
     const path = core.getInput('path')
     const { lines } = await parse(path)
     const { sha, ref } = github.context
+    core.debug(`percentage ${lines.rate}`)
+    core.setOutput('percentage', lines.rate)
     await coverage({
       token,
       branch: ref.replace('refs/heads/', ''),
       commit: sha,
       rate: lines.rate,
       totalLines: lines.found,
-      coveredLines: lines.hit,
+      coveredLines: lines.hit
     })
-    core.debug(`percentage ${lines.rate}`)
-    core.setOutput('percentage', lines.rate)
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message)

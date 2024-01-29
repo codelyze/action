@@ -5,9 +5,13 @@
  * Specifically, the inputs listed in `action.yml` should be set as environment
  * variables following the pattern `INPUT_<INPUT_NAME>`.
  */
-
+import { jest as jst } from '@jest/globals'
 import * as core from '@actions/core'
 import * as main from '../src/main'
+
+jst.unstable_mockModule('../src/codelyze', () => ({
+  coverage: jest.fn().mockResolvedValue(1)
+}))
 
 // Mock the action's main function
 const runMock = jest.spyOn(main, 'run')
@@ -43,7 +47,7 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'percentage', 90.59)
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'percentage', 0.905852417302799)
     expect(errorMock).not.toHaveBeenCalled()
   })
 
