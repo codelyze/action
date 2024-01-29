@@ -56,7 +56,7 @@ jobs:
         id: test-action
         uses: ./
         with:
-          token: token
+          token: ${{ secrets.CODELYZE_TOKEN }}
           path: __tests__/fixture/a.info
 
       - name: Print Output
