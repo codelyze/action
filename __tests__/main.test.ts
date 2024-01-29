@@ -47,7 +47,11 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'percentage', 0.905852417302799)
+    expect(setOutputMock).toHaveBeenNthCalledWith(
+      1,
+      'percentage',
+      0.905852417302799
+    )
     expect(errorMock).not.toHaveBeenCalled()
   })
 
