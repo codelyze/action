@@ -15,7 +15,7 @@ export async function run(): Promise<void> {
     const { sha, ref } = github.context
     core.debug(`percentage ${lines.rate}`)
     core.setOutput('percentage', lines.rate)
-    await coverage({
+    const res = await coverage({
       token,
       branch: ref.replace('refs/heads/', ''),
       commit: sha,
@@ -23,6 +23,7 @@ export async function run(): Promise<void> {
       totalLines: lines.found,
       coveredLines: lines.hit
     })
+    core.debug(`result ${res}`)
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message)
