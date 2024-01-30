@@ -29174,7 +29174,7 @@ async function run() {
         const { sha, ref } = github.context;
         core.debug(`percentage ${lines.rate}`);
         core.setOutput('percentage', lines.rate);
-        await (0, codelyze_1.coverage)({
+        const res = await (0, codelyze_1.coverage)({
             token,
             branch: ref.replace('refs/heads/', ''),
             commit: sha,
@@ -29182,6 +29182,7 @@ async function run() {
             totalLines: lines.found,
             coveredLines: lines.hit
         });
+        core.debug(`result ${res}`);
     }
     catch (error) {
         if (error instanceof Error) {
