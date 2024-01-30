@@ -29046,13 +29046,13 @@ function wrappy (fn, cb) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.coverage = void 0;
-const coverage = (cov) => fetch('https://api.codelyze.com/v1/projects/coverage', {
+const coverage = async (cov) => await (await fetch('https://api.codelyze.com/v1/projects/coverage', {
     method: 'POST',
     body: JSON.stringify(cov),
     headers: {
         'Content-Type': 'application/json'
     }
-}).then(r => r.json());
+})).json();
 exports.coverage = coverage;
 
 
@@ -29172,6 +29172,8 @@ async function run() {
         const path = core.getInput('path');
         const { lines } = await (0, lcov_1.parse)(path);
         const { sha, ref } = github.context;
+        core.debug(`percentage ${lines.rate}`);
+        core.setOutput('percentage', lines.rate);
         await (0, codelyze_1.coverage)({
             token,
             branch: ref.replace('refs/heads/', ''),
@@ -29180,8 +29182,6 @@ async function run() {
             totalLines: lines.found,
             coveredLines: lines.hit
         });
-        core.debug(`percentage ${lines.rate}`);
-        core.setOutput('percentage', lines.rate);
     }
     catch (error) {
         if (error instanceof Error) {
