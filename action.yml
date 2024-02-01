@@ -8,8 +8,12 @@ branding:
 
 inputs:
   token:
-    description: 'Coverage upload token generated when project is created on codelyze.com'
+    description:
+      'Coverage upload token generated when project is created on codelyze.com'
     required: true
+  gh-token:
+    description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
+    default: ${{ github.token }}
   path:
     description: 'Path to coverage file to use'
     required: true

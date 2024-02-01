@@ -29162,14 +29162,27 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const lcov_1 = __nccwpck_require__(4888);
 const codelyze_1 = __nccwpck_require__(9001);
+const formatDate = () => {
+    return new Date().toISOString();
+};
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
     try {
+        const ghToken = core.getInput('gh-token');
         const token = core.getInput('token');
         const path = core.getInput('path');
+        const octokit = github.getOctokit(ghToken);
+        const { data: check } = await octokit.rest.checks.create({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            head_sha: github.context.sha,
+            name: 'codelyze/project',
+            started_at: formatDate()
+        });
+        core.debug(`percentage ${check.id}`);
         const { lines } = await (0, lcov_1.parse)(path);
         const { sha, ref } = github.context;
         core.debug(`percentage ${lines.rate}`);
