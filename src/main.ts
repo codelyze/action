@@ -16,6 +16,7 @@ export async function run(): Promise<void> {
     const ghToken = core.getInput('gh-token')
     const token = core.getInput('token')
     const path = core.getInput('path')
+    let checkId
     if (ghToken) {
       const octokit = github.getOctokit(ghToken)
       const { data: check } = await octokit.rest.checks.create({
@@ -23,8 +24,10 @@ export async function run(): Promise<void> {
         repo: github.context.repo.repo,
         head_sha: github.context.sha,
         name: 'codelyze/project',
-        started_at: formatDate()
+        started_at: formatDate(),
+        status: 'in_progress'
       })
+      checkId = check.id
       core.debug(`check ${check.id}`)
     }
 
@@ -41,6 +44,19 @@ export async function run(): Promise<void> {
       totalLines: lines.found,
       coveredLines: lines.hit
     })
+    if (ghToken && checkId) {
+      const octokit = github.getOctokit(ghToken)
+      const { data: check } = await octokit.rest.checks.update({
+        check_run_id: checkId,
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        head_sha: github.context.sha,
+        name: 'codelyze/project',
+        conclusion: 'success'
+      })
+      core.debug(`check ${check.id}`)
+    }
+
     core.debug(`result ${res}`)
   } catch (error) {
     if (error instanceof Error) {
