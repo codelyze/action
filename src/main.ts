@@ -16,16 +16,17 @@ export async function run(): Promise<void> {
     const ghToken = core.getInput('gh-token')
     const token = core.getInput('token')
     const path = core.getInput('path')
-
-    const octokit = github.getOctokit(ghToken)
-    const { data: check } = await octokit.rest.checks.create({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      head_sha: github.context.sha,
-      name: 'codelyze/project',
-      started_at: formatDate()
-    })
-    core.debug(`percentage ${check.id}`)
+    if (ghToken) {
+      const octokit = github.getOctokit(ghToken)
+      const { data: check } = await octokit.rest.checks.create({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        head_sha: github.context.sha,
+        name: 'codelyze/project',
+        started_at: formatDate()
+      })
+      core.debug(`check ${check.id}`)
+    }
 
     const { lines } = await parse(path)
     const { sha, ref } = github.context
