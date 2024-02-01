@@ -3,9 +3,9 @@ import * as github from '@actions/github'
 import { parse } from './lcov'
 import { coverage } from './codelyze'
 
-const formatDate = (): string => {
-  return new Date().toISOString()
-}
+// const formatDate = (): string => {
+//   return new Date().toISOString()
+// }
 
 /**
  * The main function for the action.
@@ -16,20 +16,6 @@ export async function run(): Promise<void> {
     const ghToken = core.getInput('gh-token')
     const token = core.getInput('token')
     const path = core.getInput('path')
-    let checkId
-    if (ghToken) {
-      const octokit = github.getOctokit(ghToken)
-      const { data: check } = await octokit.rest.checks.create({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        head_sha: github.context.sha,
-        name: 'codelyze/project',
-        started_at: formatDate(),
-        status: 'in_progress'
-      })
-      checkId = check.id
-      core.debug(`check ${check.id}`)
-    }
 
     const { lines } = await parse(path)
     const { sha, ref } = github.context
@@ -44,17 +30,17 @@ export async function run(): Promise<void> {
       totalLines: lines.found,
       coveredLines: lines.hit
     })
-    if (ghToken && checkId) {
+    if (ghToken) {
       const octokit = github.getOctokit(ghToken)
-      const { data: check } = await octokit.rest.checks.update({
-        check_run_id: checkId,
+      const { data: status } = await octokit.rest.repos.createCommitStatus({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        head_sha: github.context.sha,
-        name: 'codelyze/project',
-        conclusion: 'success'
+        sha: github.context.sha,
+        state: 'success',
+        description: 'Everything is ok',
+        context: 'codelyze/project'
       })
-      core.debug(`check ${check.id}`)
+      core.debug(`check ${status.id}`)
     }
 
     core.debug(`result ${res}`)
