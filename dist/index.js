@@ -29088,20 +29088,25 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.coverage = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const codelyze = __importStar(__nccwpck_require__(9001));
 const util_1 = __nccwpck_require__(2629);
 const coverage = async ({ token, ghToken, summary }) => {
     const octokit = github.getOctokit(ghToken);
     const ctx = github.context;
-    const { sha, ref } = ctx;
     const { owner, repo } = ctx.repo;
+    const sha = ctx.payload.pull_request?.head.sha ?? ctx.sha;
+    const ref = ctx.payload.pull_request?.head.ref ?? ctx.ref;
+    const compareSha = ctx.payload.pull_request?.base.sha ?? ctx.payload.before;
+    core.debug(`sha: ${sha}`);
+    core.debug(`ref: ${ref}`);
+    core.debug(`compareSha ${compareSha}`);
     const { data: commit } = await octokit.rest.repos.getCommit({
         owner,
         repo,
         ref: sha
     });
-    const compareSha = ctx.payload.pull_request?.base.sha ?? ctx.payload.before;
     const comparison = await codelyze.coverage({
         token,
         branch: ref?.replace('refs/heads/', ''),
@@ -29121,6 +29126,8 @@ const coverage = async ({ token, ghToken, summary }) => {
     const diff = comparison
         ? rate - comparison.linesHit / comparison.linesFound
         : undefined;
+    core.debug(`rate: ${rate}`);
+    core.debug(`diff: ${diff}`);
     const message = (() => {
         if (diff == null) {
             return {
@@ -29140,6 +29147,7 @@ const coverage = async ({ token, ghToken, summary }) => {
         context: 'codelyze/project',
         ...message
     });
+    core.debug(`status: ${status.id}`);
     return { status, rate, diff };
 };
 exports.coverage = coverage;
@@ -29246,6 +29254,7 @@ async function run() {
         core.setOutput('percentage', rate);
     }
     catch (error) {
+        core.debug(`wtf ${error}`);
         if ((0, util_1.isErrorLike)(error))
             core.setFailed(error.message);
     }
