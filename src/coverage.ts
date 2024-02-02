@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import * as github from '@actions/github'
 import type { LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
@@ -9,18 +10,25 @@ interface Props {
   summary: LcovSummary
 }
 
+const getInfo = () => {
+  const ctx = github.context
+  const { owner, repo } = ctx.repo
+  const pr = ctx.payload.pull_request
+  const sha = pr?.head.sha ?? ctx.sha
+  const ref = pr?.head.ref ?? ctx.ref
+  const compareSha = pr?.base.sha ?? ctx.payload.before
+  return { repo, owner, sha, ref, compareSha }
+}
+
 export const coverage = async ({ token, ghToken, summary }: Props) => {
   const octokit = github.getOctokit(ghToken)
-  const ctx = github.context
-  const { sha, ref } = ctx
-  const { owner, repo } = ctx.repo
+  const { repo, owner, ref, sha, compareSha } = getInfo()
+
   const { data: commit } = await octokit.rest.repos.getCommit({
     owner,
     repo,
     ref: sha
   })
-  const compareSha = ctx.payload.pull_request?.base.sha ?? ctx.payload.before
-
   const comparison = await codelyze.coverage({
     token,
     branch: ref?.replace('refs/heads/', ''),
@@ -36,10 +44,15 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     commitDate: commit.commit.author?.date,
     compareSha
   })
+
   const rate = summary.lines.hit / summary.lines.found
   const diff = comparison
     ? rate - comparison.linesHit / comparison.linesFound
     : undefined
+
+  core.debug(`rate: ${rate}`)
+  core.debug(`diff: ${diff}`)
+
   const message = ((): {
     state: 'success' | 'failure'
     description: string
