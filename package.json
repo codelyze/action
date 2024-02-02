@@ -71,7 +71,7 @@
     "lcov-parse": "^1.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.10",
+    "@types/jest": "^29.5.12",
     "@types/lcov-parse": "^1.0.2",
     "@types/node": "^20.11.13",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
