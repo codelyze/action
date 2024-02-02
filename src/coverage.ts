@@ -10,17 +10,19 @@ interface Props {
   summary: LcovSummary
 }
 
-export const coverage = async ({ token, ghToken, summary }: Props) => {
-  const octokit = github.getOctokit(ghToken)
+const getInfo = () => {
   const ctx = github.context
   const { owner, repo } = ctx.repo
-  const sha = ctx.payload.pull_request?.head.sha ?? ctx.sha
-  const ref = ctx.payload.pull_request?.head.ref ?? ctx.ref
-  const compareSha = ctx.payload.pull_request?.base.sha ?? ctx.payload.before
+  const pr = ctx.payload.pull_request
+  const sha = pr?.head.sha ?? ctx.sha
+  const ref = pr?.head.ref ?? ctx.ref
+  const compareSha = pr?.base.sha ?? ctx.payload.before
+  return { repo, owner, sha, ref, compareSha }
+}
 
-  core.debug(`sha: ${sha}`)
-  core.debug(`ref: ${ref}`)
-  core.debug(`compareSha ${compareSha}`)
+export const coverage = async ({ token, ghToken, summary }: Props) => {
+  const octokit = github.getOctokit(ghToken)
+  const { repo, owner, ref, sha, compareSha } = getInfo()
 
   const { data: commit } = await octokit.rest.repos.getCommit({
     owner,
@@ -73,7 +75,6 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     context: 'codelyze/project',
     ...message
   })
-  core.debug(`status: ${status.id}`)
 
   return { status, rate, diff }
 }

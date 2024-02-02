@@ -29092,16 +29092,18 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const codelyze = __importStar(__nccwpck_require__(9001));
 const util_1 = __nccwpck_require__(2629);
-const coverage = async ({ token, ghToken, summary }) => {
-    const octokit = github.getOctokit(ghToken);
+const getInfo = () => {
     const ctx = github.context;
     const { owner, repo } = ctx.repo;
-    const sha = ctx.payload.pull_request?.head.sha ?? ctx.sha;
-    const ref = ctx.payload.pull_request?.head.ref ?? ctx.ref;
-    const compareSha = ctx.payload.pull_request?.base.sha ?? ctx.payload.before;
-    core.debug(`sha: ${sha}`);
-    core.debug(`ref: ${ref}`);
-    core.debug(`compareSha ${compareSha}`);
+    const pr = ctx.payload.pull_request;
+    const sha = pr?.head.sha ?? ctx.sha;
+    const ref = pr?.head.ref ?? ctx.ref;
+    const compareSha = pr?.base.sha ?? ctx.payload.before;
+    return { repo, owner, sha, ref, compareSha };
+};
+const coverage = async ({ token, ghToken, summary }) => {
+    const octokit = github.getOctokit(ghToken);
+    const { repo, owner, ref, sha, compareSha } = getInfo();
     const { data: commit } = await octokit.rest.repos.getCommit({
         owner,
         repo,
@@ -29147,7 +29149,6 @@ const coverage = async ({ token, ghToken, summary }) => {
         context: 'codelyze/project',
         ...message
     });
-    core.debug(`status: ${status.id}`);
     return { status, rate, diff };
 };
 exports.coverage = coverage;
