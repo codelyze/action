@@ -4,7 +4,7 @@
 ![CI](https://github.com/actions/typescript-action/actions/workflows/ci.yml/badge.svg)
 [![Check dist/](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml)
 [![CodeQL](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml)
-![Coverage](https://api.codelyze.com/v1/projects/badge/clb_d6da3631ad505ccb1e07b10e4a5d69cb)
+![Coverage](https://api.codelyze.com/v1/projects/badge/clb_d6da3631ad505ccb1e07b10e4a5d69cb?r=1)
 
 Use this template to bootstrap the creation of a TypeScript action. :rocket:
 
