@@ -1,4 +1,4 @@
-# Create a GitHub Action Using TypeScript
+# @codelyze/action
 
 [![GitHub Super-Linter](https://github.com/actions/typescript-action/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/actions/typescript-action/actions/workflows/ci.yml/badge.svg)
@@ -6,24 +6,26 @@
 [![CodeQL](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml)
 ![Coverage](https://api.codelyze.com/v1/projects/badge/clb_d6da3631ad505ccb1e07b10e4a5d69cb?r=1)
 
-Use this template to bootstrap the creation of a TypeScript action. :rocket:
+A GitHub action to upload coverage to codelyze.com.
 
-This template includes compilation support, tests, a validation workflow,
-publishing, and versioning guidance.
+## Usage 
 
-If you are new, there's also a simpler introduction in the
-[Hello world JavaScript action repository](https://github.com/actions/hello-world-javascript-action).
+```yml 
+   - name: Upload coverage
+     uses: codelyze/action@1.0.0
+     with:
+        token: ${{ secrets.CODELYZE_TOKEN }}
+        path: coverage/lcov.info
 
-## Create Your Own Action
+```
 
-To create your own action, you can use this repository as a template! Just
-follow the below instructions:
-
-1. Click the **Use this template** button at the top of the repository
-1. Select **Create a new repository**
-1. Select an owner and name for your new repository
-1. Click **Create repository**
-1. Clone your new repository
+### Permission
+The following workflow permissions are necessary:
+```yml
+   permissions:
+      contents: read
+      statuses: write
+```
 
 ## Initial Setup
 
