@@ -32,11 +32,11 @@ permissions:
 
 `codelyze/action` uses the following inputs:
 
-| Name       | Description                                                                                                                                                                                                              | Request | Default        |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- | -------------- |
-| `gh-token` | `GITHUB_TOKEN` (permissions `contents: write` and `pull-requests: write`) or a `repo` scoped [Personal Access Token (PAT)](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token). | no      | `GITHUB_TOKEN` |
-| `token`    | Coverage upload token generated when project is created on codelyze.com                                                                                                                                                  | yes     |                |
-| `path`     | Relative path to the coverage file                                                                                                                                                                                       | yes     |                |
+| Name       | Description                                                                                                                                                                                                              | Required | Default        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | -------------- |
+| `gh-token` | `GITHUB_TOKEN` (permissions `contents: write` and `pull-requests: write`) or a `repo` scoped [Personal Access Token (PAT)](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token). | no       | `GITHUB_TOKEN` |
+| `token`    | Coverage upload token generated when project is created on codelyze.com                                                                                                                                                  | yes      |                |
+| `path`     | Relative path to the coverage file                                                                                                                                                                                       | yes      |                |
 
 ### Outputs
 
