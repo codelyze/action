@@ -8,24 +8,35 @@
 
 A GitHub action to upload coverage to codelyze.com.
 
-## Usage 
+## Usage
 
-```yml 
-   - name: Upload coverage
-     uses: codelyze/action@1.0.0
-     with:
-        token: ${{ secrets.CODELYZE_TOKEN }}
-        path: coverage/lcov.info
-
+```yml
+- name: Upload coverage
+  uses: codelyze/action@1.0.0
+  with:
+    token: ${{ secrets.CODELYZE_TOKEN }}
+    path: coverage/lcov.info
 ```
 
 ### Permission
+
 The following workflow permissions are necessary:
+
 ```yml
-   permissions:
-      contents: read
-      statuses: write
+permissions:
+  contents: read
+  statuses: write
 ```
+
+### Inputs
+
+`codelyze/action` use the following inputs:
+
+| Name       | Description                                                                                                                                                                                                              | Default        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| `token`    | Coverage upload token generated when project is created on codelyze.com                                                                                                                                                  |                |
+| `gh-token` | `GITHUB_TOKEN` (permissions `contents: write` and `pull-requests: write`) or a `repo` scoped [Personal Access Token (PAT)](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token). | `GITHUB_TOKEN` |
+| `path`     | Relative path to the coverage file                                                                                                                                                                                       |                |
 
 ## Initial Setup
 
