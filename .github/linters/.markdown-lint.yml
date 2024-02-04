@@ -7,4 +7,5 @@ MD029:
   style: one
 
 MD013:
+  line_length: 400
   tables: false
