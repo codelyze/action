@@ -12,7 +12,7 @@ A GitHub action to upload coverage to codelyze.com.
 
 ```yml
 - name: Upload coverage
-  uses: codelyze/action@1.0.0
+  uses: codelyze/action@2.1.0
   with:
     token: ${{ secrets.CODELYZE_TOKEN }}
     path: coverage/lcov.info
