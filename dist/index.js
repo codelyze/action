@@ -29114,7 +29114,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.coverage = void 0;
 const coverage = async (cov) => await (await fetch('https://api.codelyze.com/v1/projects/coverage', {
     method: 'POST',
-    body: JSON.stringify(cov),
+    body: JSON.stringify({ ...cov, provider: 'github' }),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -29177,6 +29177,8 @@ const coverage = async ({ token, ghToken, summary }) => {
     });
     const res = await codelyze.coverage({
         token,
+        owner,
+        repo,
         branch: ref?.replace('refs/heads/', ''),
         commit: sha,
         linesFound: summary.lines.found,

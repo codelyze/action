@@ -31,6 +31,8 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
   })
   const res = await codelyze.coverage({
     token,
+    owner,
+    repo,
     branch: ref?.replace('refs/heads/', ''),
     commit: sha,
     linesFound: summary.lines.found,
