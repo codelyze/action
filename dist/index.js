@@ -29175,7 +29175,7 @@ const coverage = async ({ token, ghToken, summary }) => {
         repo,
         ref: sha
     });
-    const comparison = await codelyze.coverage({
+    const res = await codelyze.coverage({
         token,
         branch: ref?.replace('refs/heads/', ''),
         commit: sha,
@@ -29190,6 +29190,8 @@ const coverage = async ({ token, ghToken, summary }) => {
         commitDate: commit.commit.author?.date,
         compareSha
     });
+    const comparison = res?.check;
+    const utoken = res?.metadata?.token;
     const rate = summary.lines.hit / summary.lines.found;
     const diff = comparison
         ? rate - comparison.linesHit / comparison.linesFound
@@ -29208,7 +29210,8 @@ const coverage = async ({ token, ghToken, summary }) => {
             description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
         };
     })();
-    const { data: status } = await octokit.rest.repos.createCommitStatus({
+    const client = utoken ? github.getOctokit(utoken) : octokit;
+    const { data: status } = await client.rest.repos.createCommitStatus({
         owner,
         repo,
         sha,
