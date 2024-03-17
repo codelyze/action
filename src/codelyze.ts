@@ -14,9 +14,12 @@ interface Coverage {
   compareSha?: string
 }
 
-export const coverage = async (
-  cov: Coverage
-): Promise<{ linesFound: number; linesHit: number } | undefined> =>
+interface Response {
+  check?: { linesFound: number; linesHit: number }
+  metadata?: { token: string }
+}
+
+export const coverage = async (cov: Coverage): Promise<Response | undefined> =>
   await (
     await fetch('https://api.codelyze.com/v1/projects/coverage', {
       method: 'POST',

@@ -29,7 +29,7 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     repo,
     ref: sha
   })
-  const comparison = await codelyze.coverage({
+  const res = await codelyze.coverage({
     token,
     branch: ref?.replace('refs/heads/', ''),
     commit: sha,
@@ -44,6 +44,8 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     commitDate: commit.commit.author?.date,
     compareSha
   })
+  const comparison = res?.check
+  const utoken = res?.metadata?.token
 
   const rate = summary.lines.hit / summary.lines.found
   const diff = comparison
@@ -68,7 +70,8 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
       description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
     }
   })()
-  const { data: status } = await octokit.rest.repos.createCommitStatus({
+  const client = utoken ? github.getOctokit(utoken) : octokit
+  const { data: status } = await client.rest.repos.createCommitStatus({
     owner,
     repo,
     sha,
