@@ -73,7 +73,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.10",
     "@types/lcov-parse": "^1.0.2",
-    "@types/node": "^20.11.27",
+    "@types/node": "^20.11.29",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.0.0",
     "@vercel/ncc": "^0.38.1",
