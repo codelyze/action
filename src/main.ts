@@ -20,7 +20,7 @@ export async function run(): Promise<void> {
 
     core.setOutput('percentage', rate)
   } catch (error) {
-    core.debug(`wtf ${error}`)
+    core.debug(`${error}`)
     if (isErrorLike(error)) core.setFailed(error.message)
   }
 }

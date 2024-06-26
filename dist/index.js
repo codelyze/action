@@ -29397,6 +29397,7 @@ const coverage = async ({ token, ghToken, summary }) => {
         repo,
         branch: ref?.replace('refs/heads/', ''),
         commit: sha,
+        compareSha,
         linesFound: summary.lines.found,
         linesHit: summary.lines.hit,
         functionsFound: summary.functions.found,
@@ -29405,8 +29406,7 @@ const coverage = async ({ token, ghToken, summary }) => {
         branchesHit: summary.branches.hit,
         authorName: commit.commit.author?.name || undefined,
         authorEmail: commit.commit.author?.email || undefined,
-        commitDate: commit.commit.author?.date,
-        compareSha
+        commitDate: commit.commit.author?.date
     });
     const comparison = res?.check;
     const utoken = res?.metadata?.token;
@@ -29522,7 +29522,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = void 0;
+exports.run = run;
 const core = __importStar(__nccwpck_require__(2186));
 const lcov_1 = __nccwpck_require__(4888);
 const coverage_1 = __nccwpck_require__(9084);
@@ -29542,12 +29542,11 @@ async function run() {
         core.setOutput('percentage', rate);
     }
     catch (error) {
-        core.debug(`wtf ${error}`);
+        core.debug(`${error}`);
         if ((0, util_1.isErrorLike)(error))
             core.setFailed(error.message);
     }
 }
-exports.run = run;
 
 
 /***/ }),

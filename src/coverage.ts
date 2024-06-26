@@ -35,6 +35,7 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     repo,
     branch: ref?.replace('refs/heads/', ''),
     commit: sha,
+    compareSha,
     linesFound: summary.lines.found,
     linesHit: summary.lines.hit,
     functionsFound: summary.functions.found,
@@ -43,8 +44,7 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     branchesHit: summary.branches.hit,
     authorName: commit.commit.author?.name || undefined,
     authorEmail: commit.commit.author?.email || undefined,
-    commitDate: commit.commit.author?.date,
-    compareSha
+    commitDate: commit.commit.author?.date
   })
   const comparison = res?.check
   const utoken = res?.metadata?.token
