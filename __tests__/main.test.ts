@@ -26,10 +26,16 @@ describe('action', () => {
       switch (name) {
         case 'path':
           return `${__dirname}/fixture/a.info`
+        case 'base-commit':
+          return 'abc123' // Mock value for base commit
+        case 'head-commit':
+          return 'def456' // Mock value for head commit
         default:
           return ''
       }
     })
+
+    coverageMock.mockResolvedValue({ rate: 0.5 }) // Mock patch coverage result
 
     await main.run()
     expect(runMock).toHaveReturned()
@@ -38,6 +44,11 @@ describe('action', () => {
       1,
       'percentage',
       0.905852417302799
+    )
+    expect(setOutputMock).toHaveBeenNthCalledWith(
+      2,
+      'patch-coverage',
+      0.5
     )
     expect(errorMock).not.toHaveBeenCalled()
   })

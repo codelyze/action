@@ -12,7 +12,7 @@ inputs:
       'Coverage upload token generated when project is created on codelyze.com'
     required: true
   gh-token:
-    description: 'GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)'
+    description: 'GITHUB_TOKEN or a repo scoped Personal Access Token (PAT)'
     default: ${{ github.token }}
   path:
     description: 'Path to coverage file to use'
@@ -21,10 +21,18 @@ inputs:
     description: 'Show uncovered lines annotations'
     default: false
     required: false
+  base-commit:
+    description: 'Base commit SHA for patch coverage comparison'
+    required: false
+  head-commit:
+    description: 'Head commit SHA for patch coverage comparison'
+    required: false
 
 outputs:
   percentage:
     description: 'Total percentage coverage'
+  patch-coverage:
+    description: 'Patch coverage ratio'
 
 runs:
   using: node20
