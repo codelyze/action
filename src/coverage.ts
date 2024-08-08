@@ -20,6 +20,23 @@ const getInfo = () => {
   return { repo, owner, sha, ref, compareSha }
 }
 
+const getDiffLines = async (
+  octokit: ReturnType<typeof github.getOctokit>,
+  owner: string,
+  repo: string,
+  base: string,
+  head: string
+) => {
+  const { data: diff } = await octokit.rest.repos.compareCommits({
+    owner,
+    repo,
+    base,
+    head
+  })
+  const addedLines = diff.files?.flatMap(file => file.patch?.split('\n').filter(line => line.startsWith('+')) || []) || []
+  return addedLines
+}
+
 export const coverage = async ({ token, ghToken, summary }: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = getInfo()
@@ -49,13 +66,18 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
   const comparison = res?.check
   const utoken = res?.metadata?.token
 
+  let patchCoverage: number | undefined
+  const addedLines = await getDiffLines(octokit, owner, repo, compareSha, sha)
+  const addedLineNumbers = addedLines.map(line => parseInt(line.match(/\d+/)?.[0] || '0', 10))
+  const coveredAddedLines = addedLineNumbers.filter(line => summary.lines.found > line) // Simplified coverage check
+  patchCoverage = coveredAddedLines.length / addedLineNumbers.length
+
   const rate = summary.lines.hit / summary.lines.found
-  const diff = comparison
-    ? rate - comparison.linesHit / comparison.linesFound
-    : undefined
+  const diff = comparison ? rate - (comparison.linesHit / comparison.linesFound) : undefined
 
   core.debug(`rate: ${rate}`)
   core.debug(`diff: ${diff}`)
+  core.debug(`patchCoverage: ${patchCoverage}`)
 
   const message = ((): {
     state: 'success' | 'failure'
@@ -64,14 +86,15 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     if (diff == null) {
       return {
         state: 'success',
-        description: `${percentString(rate)} coverage`
+        description: `${percentString(rate)} coverage, patch coverage: ${percentString(patchCoverage ?? 0)}`
       }
     }
     return {
       state: diff < -0.0001 ? 'failure' : 'success',
-      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
+      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}, patch coverage: ${percentString(patchCoverage ?? 0)}`
     }
   })()
+
   const client = utoken ? github.getOctokit(utoken) : octokit
   const { data: status } = await client.rest.repos.createCommitStatus({
     owner,
@@ -81,5 +104,5 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     ...message
   })
 
-  return { status, rate, diff }
+  return { status, rate, diff, patchCoverage }
 }
