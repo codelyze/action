@@ -26,10 +26,6 @@ describe('action', () => {
       switch (name) {
         case 'path':
           return `${__dirname}/fixture/a.info`
-        case 'base-commit':
-          return 'abc123' // Mock value for base commit
-        case 'head-commit':
-          return 'def456' // Mock value for head commit
         default:
           return ''
       }

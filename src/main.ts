@@ -12,18 +12,14 @@ export async function run(): Promise<void> {
     const path = core.getInput('path')
     const token = core.getInput('token')
     const ghToken = core.getInput('gh-token')
-    const baseCommit = core.getInput('base-commit')
-    const headCommit = core.getInput('head-commit')
 
     const { summary } = await analyze(path)
 
     const rate = summary.lines.hit / summary.lines.found
 
     let patchCoverage: number | undefined = undefined
-    if (baseCommit && headCommit) {
-      const diffCoverage = await coverage({ token, ghToken, summary, baseCommit, headCommit })
-      patchCoverage = diffCoverage?.rate
-    }
+    const diffCoverage = await coverage({ token, ghToken, summary })
+    patchCoverage = diffCoverage?.rate
 
     await coverage({ token, ghToken, summary })
 

@@ -8,8 +8,6 @@ interface Props {
   token: string
   ghToken: string
   summary: LcovSummary
-  baseCommit?: string
-  headCommit?: string
 }
 
 const getInfo = () => {
@@ -22,7 +20,13 @@ const getInfo = () => {
   return { repo, owner, sha, ref, compareSha }
 }
 
-const getDiffLines = async (octokit: ReturnType<typeof github.getOctokit>, owner: string, repo: string, base: string, head: string) => {
+const getDiffLines = async (
+  octokit: ReturnType<typeof github.getOctokit>,
+  owner: string,
+  repo: string,
+  base: string,
+  head: string
+) => {
   const { data: diff } = await octokit.rest.repos.compareCommits({
     owner,
     repo,
@@ -33,7 +37,7 @@ const getDiffLines = async (octokit: ReturnType<typeof github.getOctokit>, owner
   return addedLines
 }
 
-export const coverage = async ({ token, ghToken, summary, baseCommit, headCommit }: Props) => {
+export const coverage = async ({ token, ghToken, summary }: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = getInfo()
 
@@ -59,19 +63,17 @@ export const coverage = async ({ token, ghToken, summary, baseCommit, headCommit
     authorEmail: commit.commit.author?.email || undefined,
     commitDate: commit.commit.author?.date
   })
+  const comparison = res?.check
+  const utoken = res?.metadata?.token
 
   let patchCoverage: number | undefined
-  if (baseCommit && headCommit) {
-    const addedLines = await getDiffLines(octokit, owner, repo, baseCommit, headCommit)
-    const addedLineNumbers = addedLines.map(line => parseInt(line.match(/\d+/)?.[0] || '0', 10))
-    const coveredAddedLines = addedLineNumbers.filter(line => summary.lines.found > line) // Simplified coverage check
-    patchCoverage = coveredAddedLines.length / addedLineNumbers.length
-  }
+  const addedLines = await getDiffLines(octokit, owner, repo, compareSha, sha)
+  const addedLineNumbers = addedLines.map(line => parseInt(line.match(/\d+/)?.[0] || '0', 10))
+  const coveredAddedLines = addedLineNumbers.filter(line => summary.lines.found > line) // Simplified coverage check
+  patchCoverage = coveredAddedLines.length / addedLineNumbers.length
 
   const rate = summary.lines.hit / summary.lines.found
-  const diff = res?.check
-    ? rate - (res.check.linesHit / res.check.linesFound)
-    : undefined
+  const diff = comparison ? rate - (comparison.linesHit / comparison.linesFound) : undefined
 
   core.debug(`rate: ${rate}`)
   core.debug(`diff: ${diff}`)
@@ -92,8 +94,8 @@ export const coverage = async ({ token, ghToken, summary, baseCommit, headCommit
       description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}, patch coverage: ${percentString(patchCoverage ?? 0)}`
     }
   })()
-  
-  const client = res?.metadata?.token ? github.getOctokit(res.metadata.token) : octokit
+
+  const client = utoken ? github.getOctokit(utoken) : octokit
   const { data: status } = await client.rest.repos.createCommitStatus({
     owner,
     repo,
