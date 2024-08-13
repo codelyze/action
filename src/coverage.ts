@@ -19,11 +19,11 @@ export interface PatchCoverageResult {
 export const getInfo = () => {
   const ctx = github.context
   const { owner, repo } = ctx.repo
-  const pr = ctx.payload.pull_request 
+  const pr = ctx.payload.pull_request
   const sha = pr?.head.sha ?? ctx.sha
   const ref = pr?.head.ref ?? ctx.ref
   const compareSha = pr?.base.sha ?? ctx.payload.before
-  return { repo, owner, sha, ref, compareSha }  
+  return { repo, owner, sha, ref, compareSha }
 }
 
 export const getDiffLines = async (
@@ -39,7 +39,10 @@ export const getDiffLines = async (
     base,
     head
   })
-  const addedLines = diff.files?.flatMap(file => file.patch?.split('\n').filter(line => line.startsWith('+')) || []) || []
+  const addedLines =
+    diff.files?.flatMap(
+      file => file.patch?.split('\n').filter(line => line.startsWith('+')) || []
+    ) || []
   return addedLines
 }
 
@@ -52,8 +55,12 @@ export const calculatePatchCoverage = async (
   summary: LcovSummary
 ): Promise<PatchCoverageResult> => {
   const addedLines = await getDiffLines(octokit, owner, repo, base, head)
-  const addedLineNumbers = addedLines.map(line => parseInt(line.match(/\d+/)?.[0] || '0', 10))
-  const coveredAddedLines = addedLineNumbers.filter(line => summary.lines.found > line) // Simplified coverage check
+  const addedLineNumbers = addedLines.map(line =>
+    parseInt(line.match(/\d+/)?.[0] || '0', 10)
+  )
+  const coveredAddedLines = addedLineNumbers.filter(
+    line => summary.lines.found > line
+  ) // Simplified coverage check
   const patchCoverage = coveredAddedLines.length / addedLineNumbers.length
 
   return { patchCoverage, addedLines, coveredAddedLines }
@@ -114,15 +121,24 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     authorEmail: commit.commit.author?.email || undefined,
     commitDate: commit.commit.author?.date
   })
-  
+
   const comparison = res?.check
   const utoken = res?.metadata?.token
 
   // Calculate patch coverage using the new function
-  const { patchCoverage } = await calculatePatchCoverage(octokit, owner, repo, compareSha, sha, summary)
+  const { patchCoverage } = await calculatePatchCoverage(
+    octokit,
+    owner,
+    repo,
+    compareSha,
+    sha,
+    summary
+  )
 
   const rate = summary.lines.hit / summary.lines.found
-  const diff = comparison ? rate - (comparison.linesHit / comparison.linesFound) : undefined
+  const diff = comparison
+    ? rate - comparison.linesHit / comparison.linesFound
+    : undefined
 
   core.debug(`rate: ${rate}`)
   core.debug(`diff: ${diff}`)
@@ -144,14 +160,14 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
   })
 
   // Post the patch coverage status
-  const { data: patchStatusResult } = await client.rest.repos.createCommitStatus({
-    owner,
-    repo,
-    sha,
-    context: 'codelyze/project-patch',
-    ...patchCoverageMessage
-  })
+  const { data: patchStatusResult } =
+    await client.rest.repos.createCommitStatus({
+      owner,
+      repo,
+      sha,
+      context: 'codelyze/project-patch',
+      ...patchCoverageMessage
+    })
 
   return { rate, diff, patchCoverage }
 }
-

@@ -41,11 +41,7 @@ describe('action', () => {
       'percentage',
       0.905852417302799
     )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      2,
-      'patch-coverage',
-      0.5
-    )
+    expect(setOutputMock).toHaveBeenNthCalledWith(2, 'patch-coverage', 0.5)
     expect(errorMock).not.toHaveBeenCalled()
   })
 

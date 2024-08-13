@@ -29369,7 +29369,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.coverage = void 0;
+exports.coverage = exports.patchStatus = exports.coverageStatus = exports.calculatePatchCoverage = exports.getDiffLines = exports.getInfo = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const codelyze = __importStar(__nccwpck_require__(9001));
@@ -29383,9 +29383,51 @@ const getInfo = () => {
     const compareSha = pr?.base.sha ?? ctx.payload.before;
     return { repo, owner, sha, ref, compareSha };
 };
+exports.getInfo = getInfo;
+const getDiffLines = async (octokit, owner, repo, base, head) => {
+    const { data: diff } = await octokit.rest.repos.compareCommits({
+        owner,
+        repo,
+        base,
+        head
+    });
+    const addedLines = diff.files?.flatMap(file => file.patch?.split('\n').filter(line => line.startsWith('+')) || []) || [];
+    return addedLines;
+};
+exports.getDiffLines = getDiffLines;
+const calculatePatchCoverage = async (octokit, owner, repo, base, head, summary) => {
+    const addedLines = await (0, exports.getDiffLines)(octokit, owner, repo, base, head);
+    const addedLineNumbers = addedLines.map(line => parseInt(line.match(/\d+/)?.[0] || '0', 10));
+    const coveredAddedLines = addedLineNumbers.filter(line => summary.lines.found > line); // Simplified coverage check
+    const patchCoverage = coveredAddedLines.length / addedLineNumbers.length;
+    return { patchCoverage, addedLines, coveredAddedLines };
+};
+exports.calculatePatchCoverage = calculatePatchCoverage;
+// Function to generate the total coverage status message
+const coverageStatus = (rate, diff, compareSha) => {
+    if (diff == null) {
+        return {
+            state: 'success',
+            description: `${(0, util_1.percentString)(rate)} coverage`
+        };
+    }
+    return {
+        state: diff < -0.0001 ? 'failure' : 'success',
+        description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
+    };
+};
+exports.coverageStatus = coverageStatus;
+// Function to generate the patch coverage status message
+const patchStatus = (patchCoverage) => {
+    return {
+        state: patchCoverage && patchCoverage < 0.8 ? 'failure' : 'success', // Example threshold for failure
+        description: `Patch coverage: ${(0, util_1.percentString)(patchCoverage ?? 0)}`
+    };
+};
+exports.patchStatus = patchStatus;
 const coverage = async ({ token, ghToken, summary }) => {
     const octokit = github.getOctokit(ghToken);
-    const { repo, owner, ref, sha, compareSha } = getInfo();
+    const { repo, owner, ref, sha, compareSha } = (0, exports.getInfo)();
     const { data: commit } = await octokit.rest.repos.getCommit({
         owner,
         repo,
@@ -29410,33 +29452,36 @@ const coverage = async ({ token, ghToken, summary }) => {
     });
     const comparison = res?.check;
     const utoken = res?.metadata?.token;
+    // Calculate patch coverage using the new function
+    const { patchCoverage } = await (0, exports.calculatePatchCoverage)(octokit, owner, repo, compareSha, sha, summary);
     const rate = summary.lines.hit / summary.lines.found;
     const diff = comparison
         ? rate - comparison.linesHit / comparison.linesFound
         : undefined;
     core.debug(`rate: ${rate}`);
     core.debug(`diff: ${diff}`);
-    const message = (() => {
-        if (diff == null) {
-            return {
-                state: 'success',
-                description: `${(0, util_1.percentString)(rate)} coverage`
-            };
-        }
-        return {
-            state: diff < -0.0001 ? 'failure' : 'success',
-            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
-        };
-    })();
+    core.debug(`patchCoverage: ${patchCoverage}`);
+    // Generate the status messages using the new functions
+    const totalCoverageMessage = (0, exports.coverageStatus)(rate, diff, compareSha);
+    const patchCoverageMessage = (0, exports.patchStatus)(patchCoverage);
     const client = utoken ? github.getOctokit(utoken) : octokit;
-    const { data: status } = await client.rest.repos.createCommitStatus({
+    // Post the total coverage status
+    const { data: totalStatus } = await client.rest.repos.createCommitStatus({
         owner,
         repo,
         sha,
-        context: 'codelyze/project',
-        ...message
+        context: 'codelyze/project-total',
+        ...totalCoverageMessage
     });
-    return { status, rate, diff };
+    // Post the patch coverage status
+    const { data: patchStatusResult } = await client.rest.repos.createCommitStatus({
+        owner,
+        repo,
+        sha,
+        context: 'codelyze/project-patch',
+        ...patchCoverageMessage
+    });
+    return { rate, diff, patchCoverage };
 };
 exports.coverage = coverage;
 
@@ -29538,8 +29583,14 @@ async function run() {
         const ghToken = core.getInput('gh-token');
         const { summary } = await (0, lcov_1.analyze)(path);
         const rate = summary.lines.hit / summary.lines.found;
+        let patchCoverage = undefined;
+        const diffCoverage = await (0, coverage_1.coverage)({ token, ghToken, summary });
+        patchCoverage = diffCoverage?.rate;
         await (0, coverage_1.coverage)({ token, ghToken, summary });
         core.setOutput('percentage', rate);
+        if (patchCoverage !== undefined) {
+            core.setOutput('patch-coverage', patchCoverage);
+        }
     }
     catch (error) {
         core.debug(`${error}`);
