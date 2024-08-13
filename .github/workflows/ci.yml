@@ -45,7 +45,9 @@ jobs:
         run: npm run ci-test
 
       - name: Upload coverage
-        uses: ./
+       uses: ./.github/actions/upload-coverage
         with:
           token: ${{ secrets.CODELYZE_TOKEN }}
           path: coverage/lcov.info
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          annotations: false
