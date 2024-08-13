@@ -29481,7 +29481,7 @@ const coverage = async ({ token, ghToken, summary }) => {
         context: 'codelyze/project-patch',
         ...patchCoverageMessage
     });
-    return { rate, diff, patchCoverage };
+    return { rate, diff, patchCoverage, totalStatus, patchStatusResult };
 };
 exports.coverage = coverage;
 

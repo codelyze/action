@@ -169,5 +169,5 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
       ...patchCoverageMessage
     })
 
-  return { rate, diff, patchCoverage }
+  return { rate, diff, patchCoverage, totalStatus, patchStatusResult }
 }
