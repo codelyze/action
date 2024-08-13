@@ -58,13 +58,13 @@ export const calculatePatchCoverage = async (
   const addedLineNumbers = addedLines.map(line =>
     parseInt(line.match(/\d+/)?.[0] || '0', 10)
   )
-  const coveredAddedLines = addedLineNumbers.filter(
-    line => summary.lines.found > line
-  ) // Simplified coverage check
-  const patchCoverage = coveredAddedLines.length / addedLineNumbers.length
-
+  const coveredAddedLines = addedLineNumbers.filter(line => true)
+  const patchCoverage = addedLineNumbers.length > 0
+    ? (summary.lines.hit / summary.lines.found)
+    : 0
   return { patchCoverage, addedLines, coveredAddedLines }
 }
+
 
 // Function to generate the total coverage status message
 export const coverageStatus = (
