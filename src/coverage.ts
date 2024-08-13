@@ -54,18 +54,15 @@ export const calculatePatchCoverage = async (
   head: string,
   summary: LcovSummary
 ): Promise<PatchCoverageResult> => {
-  // Get the list of added lines from the diff
   const addedLines = await getDiffLines(octokit, owner, repo, base, head)
-
-  // Extract line numbers from the added lines
   const addedLineNumbers = addedLines.map(line =>
     parseInt(line.match(/\d+/)?.[0] || '0', 10)
   )
-  // Placeholder logic to handle cases without specific line coverage data
-  const coveredAddedLines = addedLineNumbers.length > 0 ? addedLineNumbers : []
+  const coveredAddedLines = addedLineNumbers.filter(
+    line => summary.lines.found > line
+  ) 
+  const patchCoverage = coveredAddedLines.length / addedLineNumbers.length
 
-  const patchCoverage =
-    addedLineNumbers.length > 0 ? summary.lines.hit / summary.lines.found : 0 // Prevent division by zero if no lines are added
   return { patchCoverage, addedLines, coveredAddedLines }
 }
 
