@@ -60,7 +60,7 @@ export const calculatePatchCoverage = async (
   )
   const coveredAddedLines = addedLineNumbers.filter(
     line => summary.lines.found > line
-  ) 
+  )
   const patchCoverage = coveredAddedLines.length / addedLineNumbers.length
 
   return { patchCoverage, addedLines, coveredAddedLines }
