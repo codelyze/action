@@ -44,10 +44,8 @@ jobs:
         id: npm-ci-test
         run: npm run ci-test
 
-      - name: Test action
-          uses: ./
-          with:
-            token: ${{ secrets.CODELYZE_TOKEN }} 
-            gh-token: ${{ secrets.GITHUB_TOKEN }} 
-            path: coverage/lcov.info
-
+      - name: Upload coverage
+        uses: ./
+        with:
+          token: ${{ secrets.CODELYZE_TOKEN }}
+          path: coverage/lcov.info
