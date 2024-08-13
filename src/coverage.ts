@@ -155,7 +155,7 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     owner,
     repo,
     sha,
-    context: 'codelyze/project-total',
+    context: 'codelyze/coverage',
     ...totalCoverageMessage
   })
 
@@ -165,7 +165,7 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
       owner,
       repo,
       sha,
-      context: 'codelyze/project-patch',
+      context: 'codelyze/patch',
       ...patchCoverageMessage
     })
 

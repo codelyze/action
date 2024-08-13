@@ -29470,7 +29470,7 @@ const coverage = async ({ token, ghToken, summary }) => {
         owner,
         repo,
         sha,
-        context: 'codelyze/project-total',
+        context: 'codelyze/coverage',
         ...totalCoverageMessage
     });
     // Post the patch coverage status
@@ -29478,7 +29478,7 @@ const coverage = async ({ token, ghToken, summary }) => {
         owner,
         repo,
         sha,
-        context: 'codelyze/project-patch',
+        context: 'codelyze/patch',
         ...patchCoverageMessage
     });
     return { rate, diff, patchCoverage, totalStatus, patchStatusResult };
