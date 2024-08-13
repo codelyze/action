@@ -3,11 +3,14 @@ import * as github from '@actions/github'
 import type { LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
 import { percentString } from './util'
+import { getDiff, parseDiff } from './diff'
 
 interface Props {
   token: string
   ghToken: string
   summary: LcovSummary
+  baseCommit: string
+  headCommit: string
 }
 
 const getInfo = () => {
@@ -20,7 +23,13 @@ const getInfo = () => {
   return { repo, owner, sha, ref, compareSha }
 }
 
-export const coverage = async ({ token, ghToken, summary }: Props) => {
+export const coverage = async ({
+  token,
+  ghToken,
+  summary,
+  baseCommit,
+  headCommit
+}: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = getInfo()
 
@@ -29,6 +38,7 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     repo,
     ref: sha
   })
+
   const res = await codelyze.coverage({
     token,
     owner,
@@ -46,32 +56,41 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     authorEmail: commit.commit.author?.email || undefined,
     commitDate: commit.commit.author?.date
   })
-  const comparison = res?.check
+
   const utoken = res?.metadata?.token
 
+  // Get the diff between commits
+  const diff = await getDiff(baseCommit, headCommit)
+  const addedLines = parseDiff(diff)
+
+  // Check coverage for added lines
+  const uncoveredLines = addedLines.filter(() => !summary.lines.hit) // You need to implement this check based on your coverage format
+  const patchCoverageRate =
+    (summary.lines.hit - uncoveredLines.length) / summary.lines.found
+
   const rate = summary.lines.hit / summary.lines.found
-  const diff = comparison
-    ? rate - comparison.linesHit / comparison.linesFound
-    : undefined
+  const diffCoverageRate = patchCoverageRate // Calculate the ratio of uncovered lines
 
   core.debug(`rate: ${rate}`)
-  core.debug(`diff: ${diff}`)
+  core.debug(`patchCoverageRate: ${patchCoverageRate}`)
 
   const message = ((): {
     state: 'success' | 'failure'
     description: string
   } => {
-    if (diff == null) {
+    if (diffCoverageRate < 0.9) {
+      // Example threshold
       return {
-        state: 'success',
-        description: `${percentString(rate)} coverage`
+        state: 'failure',
+        description: `${percentString(rate)} coverage with ${percentString(diffCoverageRate)} patch coverage`
       }
     }
     return {
-      state: diff < -0.0001 ? 'failure' : 'success',
-      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
+      state: 'success',
+      description: `${percentString(rate)} coverage with ${percentString(diffCoverageRate)} patch coverage`
     }
   })()
+
   const client = utoken ? github.getOctokit(utoken) : octokit
   const { data: status } = await client.rest.repos.createCommitStatus({
     owner,
@@ -81,5 +100,5 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
     ...message
   })
 
-  return { status, rate, diff }
+  return { status, rate, diffCoverageRate }
 }

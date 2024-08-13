@@ -29374,6 +29374,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const codelyze = __importStar(__nccwpck_require__(9001));
 const util_1 = __nccwpck_require__(2629);
+const diff_1 = __nccwpck_require__(4275);
 const getInfo = () => {
     const ctx = github.context;
     const { owner, repo } = ctx.repo;
@@ -29383,7 +29384,7 @@ const getInfo = () => {
     const compareSha = pr?.base.sha ?? ctx.payload.before;
     return { repo, owner, sha, ref, compareSha };
 };
-const coverage = async ({ token, ghToken, summary }) => {
+const coverage = async ({ token, ghToken, summary, baseCommit, headCommit }) => {
     const octokit = github.getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = getInfo();
     const { data: commit } = await octokit.rest.repos.getCommit({
@@ -29408,24 +29409,28 @@ const coverage = async ({ token, ghToken, summary }) => {
         authorEmail: commit.commit.author?.email || undefined,
         commitDate: commit.commit.author?.date
     });
-    const comparison = res?.check;
     const utoken = res?.metadata?.token;
+    // Get the diff between commits
+    const diff = await (0, diff_1.getDiff)(baseCommit, headCommit);
+    const addedLines = (0, diff_1.parseDiff)(diff);
+    // Check coverage for added lines
+    const uncoveredLines = addedLines.filter(() => !summary.lines.hit); // You need to implement this check based on your coverage format
+    const patchCoverageRate = (summary.lines.hit - uncoveredLines.length) / summary.lines.found;
     const rate = summary.lines.hit / summary.lines.found;
-    const diff = comparison
-        ? rate - comparison.linesHit / comparison.linesFound
-        : undefined;
+    const diffCoverageRate = patchCoverageRate; // Calculate the ratio of uncovered lines
     core.debug(`rate: ${rate}`);
-    core.debug(`diff: ${diff}`);
+    core.debug(`patchCoverageRate: ${patchCoverageRate}`);
     const message = (() => {
-        if (diff == null) {
+        if (diffCoverageRate < 0.9) {
+            // Example threshold
             return {
-                state: 'success',
-                description: `${(0, util_1.percentString)(rate)} coverage`
+                state: 'failure',
+                description: `${(0, util_1.percentString)(rate)} coverage with ${(0, util_1.percentString)(diffCoverageRate)} patch coverage`
             };
         }
         return {
-            state: diff < -0.0001 ? 'failure' : 'success',
-            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
+            state: 'success',
+            description: `${(0, util_1.percentString)(rate)} coverage with ${(0, util_1.percentString)(diffCoverageRate)} patch coverage`
         };
     })();
     const client = utoken ? github.getOctokit(utoken) : octokit;
@@ -29436,9 +29441,36 @@ const coverage = async ({ token, ghToken, summary }) => {
         context: 'codelyze/project',
         ...message
     });
-    return { status, rate, diff };
+    return { status, rate, diffCoverageRate };
 };
 exports.coverage = coverage;
+
+
+/***/ }),
+
+/***/ 4275:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseDiff = exports.getDiff = void 0;
+const child_process_1 = __nccwpck_require__(2081);
+const util_1 = __nccwpck_require__(3837);
+const execPromise = (0, util_1.promisify)(child_process_1.exec);
+const getDiff = async (base, head) => {
+    const { stdout } = await execPromise(`git diff ${base} ${head}`);
+    return stdout;
+};
+exports.getDiff = getDiff;
+const parseDiff = (diff) => {
+    const addedLines = diff
+        .split('\n')
+        .filter(line => line.startsWith('+') && !line.startsWith('+++'))
+        .map(line => line.slice(1).trim()); // Remove the '+' and trim spaces
+    return addedLines;
+};
+exports.parseDiff = parseDiff;
 
 
 /***/ }),
@@ -29527,18 +29559,16 @@ const core = __importStar(__nccwpck_require__(2186));
 const lcov_1 = __nccwpck_require__(4888);
 const coverage_1 = __nccwpck_require__(9084);
 const util_1 = __nccwpck_require__(2629);
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
 async function run() {
     try {
         const path = core.getInput('path');
         const token = core.getInput('token');
         const ghToken = core.getInput('gh-token');
+        const baseCommit = core.getInput('base-commit');
+        const headCommit = core.getInput('head-commit');
         const { summary } = await (0, lcov_1.analyze)(path);
         const rate = summary.lines.hit / summary.lines.found;
-        await (0, coverage_1.coverage)({ token, ghToken, summary });
+        await (0, coverage_1.coverage)({ token, ghToken, summary, baseCommit, headCommit });
         core.setOutput('percentage', rate);
     }
     catch (error) {
@@ -29598,6 +29628,14 @@ module.exports = require("async_hooks");
 
 "use strict";
 module.exports = require("buffer");
+
+/***/ }),
+
+/***/ 2081:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
 
 /***/ }),
 

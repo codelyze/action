@@ -17,6 +17,12 @@ inputs:
   path:
     description: 'Path to coverage file to use'
     required: true
+  base-commit:
+    description: 'Base commit SHA for diff calculation'
+    required: true
+  head-commit:
+    description: 'Head commit SHA for diff calculation'
+    required: true
   annotations:
     description: 'Show uncovered lines annotations'
     default: false
