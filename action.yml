@@ -25,6 +25,8 @@ inputs:
 outputs:
   percentage:
     description: 'Total percentage coverage'
+  patch-coverage:
+    description: 'Patch coverage ratio'
 
 runs:
   using: node20

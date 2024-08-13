@@ -16,9 +16,17 @@ export async function run(): Promise<void> {
     const { summary } = await analyze(path)
 
     const rate = summary.lines.hit / summary.lines.found
+
+    let patchCoverage: number | undefined = undefined
+    const diffCoverage = await coverage({ token, ghToken, summary })
+    patchCoverage = diffCoverage?.rate
+
     await coverage({ token, ghToken, summary })
 
     core.setOutput('percentage', rate)
+    if (patchCoverage !== undefined) {
+      core.setOutput('patch-coverage', patchCoverage)
+    }
   } catch (error) {
     core.debug(`${error}`)
     if (isErrorLike(error)) core.setFailed(error.message)
