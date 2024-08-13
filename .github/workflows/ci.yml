@@ -44,7 +44,9 @@ jobs:
         id: npm-ci-test
         run: npm run ci-test
 
-      - name: coverage
-        id: npm-coverage
-        run: npm run coverage
+      - name: Test action
+        uses: ./
+        with:
+          token: ${{ secrets.CODELYZE_TOKEN }}
+          path: coverage/lcov.info
 
