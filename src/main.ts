@@ -13,12 +13,16 @@ export async function run(): Promise<void> {
     const token = core.getInput('token')
     const ghToken = core.getInput('gh-token')
 
-    const { summary } = await analyze(path)
+    const {
+      summary,
+      diffCoverage: { newLinesCovered, totalLines }
+    } = await analyze({ path, ghToken })
 
     const rate = summary.lines.hit / summary.lines.found
     await coverage({ token, ghToken, summary })
 
     core.setOutput('percentage', rate)
+    core.setOutput('diffCoverage', newLinesCovered / totalLines)
   } catch (error) {
     core.debug(`${error}`)
     if (isErrorLike(error)) core.setFailed(error.message)

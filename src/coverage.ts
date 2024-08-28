@@ -10,7 +10,7 @@ interface Props {
   summary: LcovSummary
 }
 
-const getInfo = () => {
+export const getContextInfo = () => {
   const ctx = github.context
   const { owner, repo } = ctx.repo
   const pr = ctx.payload.pull_request
@@ -22,7 +22,7 @@ const getInfo = () => {
 
 export const coverage = async ({ token, ghToken, summary }: Props) => {
   const octokit = github.getOctokit(ghToken)
-  const { repo, owner, ref, sha, compareSha } = getInfo()
+  const { repo, owner, ref, sha, compareSha } = getContextInfo()
 
   const { data: commit } = await octokit.rest.repos.getCommit({
     owner,
