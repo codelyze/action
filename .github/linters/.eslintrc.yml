@@ -36,6 +36,12 @@ extends:
 
 rules:
   {
+    'import/no-unresolved': [
+      'error',
+      {
+        ignore: ['^@octokit/types'],
+      },
+    ],
     'eqeqeq': ['error', 'smart'],
     'camelcase': 'off',
     'eslint-comments/no-use': 'off',

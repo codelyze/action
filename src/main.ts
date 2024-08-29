@@ -1,7 +1,10 @@
 import * as core from '@actions/core'
-import { analyze } from './lcov'
+import * as github from '@actions/github'
+import { analyze, parseLcov } from './lcov'
 import { coverage } from './coverage'
-import { isErrorLike } from './util'
+import { getContextInfo, isErrorLike } from './util'
+import { analyzeDiffCoverage } from './diff'
+import { readFile } from 'fs/promises'
 
 /**
  * The main function for the action.
@@ -13,13 +16,31 @@ export async function run(): Promise<void> {
     const token = core.getInput('token')
     const ghToken = core.getInput('gh-token')
 
-    const {
-      summary,
-      diffCoverage: { newLinesCovered, totalLines }
-    } = await analyze({ path, ghToken })
+    const { summary } = await analyze(path)
+    console.log(2)
+    const octokit = github.getOctokit(ghToken)
+    console.log(3)
+    const context = getContextInfo()
+    console.log(4)
 
+    const result = await octokit.rest.repos.getCommit({
+      owner: context.owner,
+      repo: context.repo,
+      ref: context.sha
+    })
+
+    const lcovString = await readFile(path, 'utf8')
+    const parsedLcov = await parseLcov(lcovString)
+    console.log(5)
+    const { newLinesCovered, totalLines } = await analyzeDiffCoverage({
+      lcovFiles: parsedLcov,
+      diffString: result.data.toString(),
+      context,
+      octokit
+    })
+    console.log(6)
     const rate = summary.lines.hit / summary.lines.found
-    await coverage({ token, ghToken, summary })
+    await coverage({ token, context, summary, commit: result.data, octokit })
 
     core.setOutput('percentage', rate)
     core.setOutput('diffCoverage', newLinesCovered / totalLines)

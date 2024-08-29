@@ -1,6 +1,10 @@
 import * as core from '@actions/core'
 import * as main from '../src/main'
 import * as cov from '../src/coverage'
+import * as diff from '../src/diff'
+import * as github from '@actions/github'
+import * as util from '../src/util'
+import { GitHub } from '@actions/github/lib/utils'
 
 const runMock = jest.spyOn(main, 'run')
 
@@ -9,6 +13,10 @@ let getInputMock: jest.SpyInstance
 let setFailedMock: jest.SpyInstance
 let setOutputMock: jest.SpyInstance
 let coverageMock: jest.SpyInstance
+let analyzeDiffCov: jest.SpyInstance
+let getOctokit: jest.SpyInstance
+let contextInfo: jest.SpyInstance
+let getCommit: jest.SpyInstance
 
 describe('action', () => {
   beforeEach(() => {
@@ -19,6 +27,35 @@ describe('action', () => {
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
     coverageMock = jest.spyOn(cov, 'coverage').mockImplementation()
+    analyzeDiffCov = jest
+      .spyOn(diff, 'analyzeDiffCoverage')
+      .mockImplementation(async () =>
+        Promise.resolve({
+          newLinesCovered: 12,
+          totalLines: 13
+        })
+      )
+    getCommit = jest.fn(async () => Promise.resolve({ data: {} }))
+    getOctokit = jest.spyOn(github, 'getOctokit').mockImplementation(() => {
+      return {
+        rest: {
+          repos: {
+            getCommit
+          }
+        }
+      } as unknown as InstanceType<typeof GitHub>
+    })
+    contextInfo = jest.spyOn(util, 'getContextInfo').mockImplementation(() => {
+      return {
+        repo: 'repo',
+        owner: 'owner',
+        sha: 'sha',
+        ref: 'ref',
+        compareSha: 'compareSha'
+      }
+    })
+    // readFile = jest.spyOn(promises, 'readFile').mockImplementation()
+    // parseLcov = jest.spyOn(lcov, 'parseLcov').mockImplementation()
   })
 
   it('sets the output', async () => {
@@ -33,6 +70,10 @@ describe('action', () => {
 
     await main.run()
     expect(runMock).toHaveReturned()
+    expect(getOctokit).toHaveBeenCalled()
+    expect(contextInfo).toHaveBeenCalled()
+    expect(getCommit).toHaveBeenCalled()
+    expect(analyzeDiffCov).toHaveBeenCalled()
     expect(coverageMock).toHaveBeenCalled()
     expect(setOutputMock).toHaveBeenNthCalledWith(
       1,
