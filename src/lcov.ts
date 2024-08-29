@@ -40,7 +40,6 @@ interface ParseResult {
 
 export const analyze = async (path: string): Promise<ParseResult> => {
   const file = await readFile(path, 'utf8')
-  console.log(file)
   const data = await parseLcov(file)
   const summary = summarize(data)
 

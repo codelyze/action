@@ -17,11 +17,8 @@ export async function run(): Promise<void> {
     const ghToken = core.getInput('gh-token')
 
     const { summary } = await analyze(path)
-    console.log(2)
     const octokit = github.getOctokit(ghToken)
-    console.log(3)
     const context = getContextInfo()
-    console.log(4)
 
     const result = await octokit.rest.repos.getCommit({
       owner: context.owner,
@@ -31,14 +28,14 @@ export async function run(): Promise<void> {
 
     const lcovString = await readFile(path, 'utf8')
     const parsedLcov = await parseLcov(lcovString)
-    console.log(5)
+
     const { newLinesCovered, totalLines } = await analyzeDiffCoverage({
       lcovFiles: parsedLcov,
       diffString: result.data.toString(),
       context,
       octokit
     })
-    console.log(6)
+
     const rate = summary.lines.hit / summary.lines.found
     await coverage({ token, context, summary, commit: result.data, octokit })
 
