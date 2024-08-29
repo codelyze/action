@@ -3,7 +3,7 @@ import * as github from '@actions/github'
 import { analyze, parseLcov } from './lcov'
 import { coverage } from './coverage'
 import { getContextInfo, isErrorLike } from './util'
-import { analyzeDiffCoverage, log } from './diff'
+import { analyzeDiffCoverage } from './diff'
 import { readFile } from 'fs/promises'
 
 /**
@@ -32,8 +32,6 @@ export async function run(): Promise<void> {
       }
     })
 
-    await log(diff.data.toString())
-
     const { newLinesCovered, totalLines } = await analyzeDiffCoverage({
       lcovFiles: parsedLcov,
       diffString: diff.data.toString(),
@@ -41,15 +39,8 @@ export async function run(): Promise<void> {
       octokit
     })
 
-    await log(JSON.stringify({ newLinesCovered, totalLines }))
-
-    const result = await octokit.rest.repos.getCommit({
-      owner: context.owner,
-      repo: context.repo,
-      ref: context.sha
-    })
     const rate = summary.lines.hit / summary.lines.found
-    await coverage({ token, context, summary, commit: result.data, octokit })
+    await coverage({ token, ghToken, summary, context })
 
     core.setOutput('percentage', rate)
     core.setOutput('diffCoverage', newLinesCovered / totalLines)

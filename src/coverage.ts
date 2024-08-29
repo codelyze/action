@@ -3,30 +3,31 @@ import * as github from '@actions/github'
 import type { LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
 import { percentString } from './util'
-import { ContextInfo, GithubCommit, Octokit } from './types'
+import { ContextInfo } from './types'
 
 interface Props {
   token: string
-  context: ContextInfo
+  ghToken: string
   summary: LcovSummary
-  commit: GithubCommit
-  octokit: Octokit
+  context: ContextInfo
 }
 
-export const coverage = async ({
-  token,
-  context,
-  summary,
-  commit,
-  octokit
-}: Props) => {
+export const coverage = async ({ token, ghToken, summary, context }: Props) => {
+  const octokit = github.getOctokit(ghToken)
+  const { repo, owner, ref, sha, compareSha } = context
+
+  const { data: commit } = await octokit.rest.repos.getCommit({
+    owner,
+    repo,
+    ref: sha
+  })
   const res = await codelyze.coverage({
     token,
-    owner: context.owner,
-    repo: context.repo,
-    branch: context.ref.replace('refs/heads/', ''),
-    commit: context.sha,
-    compareSha: context.compareSha,
+    owner,
+    repo,
+    branch: ref.replace('refs/heads/', ''),
+    commit: sha,
+    compareSha,
     linesFound: summary.lines.found,
     linesHit: summary.lines.hit,
     functionsFound: summary.functions.found,
@@ -60,14 +61,14 @@ export const coverage = async ({
     }
     return {
       state: diff < -0.0001 ? 'failure' : 'success',
-      description: `${percentString(rate)} (${percentString(diff)}) compared to ${context.compareSha.slice(0, 8)}`
+      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
     }
   })()
   const client = utoken ? github.getOctokit(utoken) : octokit
   const { data: status } = await client.rest.repos.createCommitStatus({
-    owner: context.owner,
-    repo: context.repo,
-    sha: context.sha,
+    owner,
+    repo,
+    sha,
     context: 'codelyze/project',
     ...message
   })

@@ -29383,14 +29383,21 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const codelyze = __importStar(__nccwpck_require__(9001));
 const util_1 = __nccwpck_require__(2629);
-const coverage = async ({ token, context, summary, commit, octokit }) => {
+const coverage = async ({ token, ghToken, summary, context }) => {
+    const octokit = github.getOctokit(ghToken);
+    const { repo, owner, ref, sha, compareSha } = context;
+    const { data: commit } = await octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref: sha
+    });
     const res = await codelyze.coverage({
         token,
-        owner: context.owner,
-        repo: context.repo,
-        branch: context.ref.replace('refs/heads/', ''),
-        commit: context.sha,
-        compareSha: context.compareSha,
+        owner,
+        repo,
+        branch: ref.replace('refs/heads/', ''),
+        commit: sha,
+        compareSha,
         linesFound: summary.lines.found,
         linesHit: summary.lines.hit,
         functionsFound: summary.functions.found,
@@ -29418,14 +29425,14 @@ const coverage = async ({ token, context, summary, commit, octokit }) => {
         }
         return {
             state: diff < -0.0001 ? 'failure' : 'success',
-            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${context.compareSha.slice(0, 8)}`
+            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
         };
     })();
     const client = utoken ? github.getOctokit(utoken) : octokit;
     const { data: status } = await client.rest.repos.createCommitStatus({
-        owner: context.owner,
-        repo: context.repo,
-        sha: context.sha,
+        owner,
+        repo,
+        sha,
         context: 'codelyze/project',
         ...message
     });
@@ -29445,11 +29452,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.log = exports.analyzeDiffCoverage = void 0;
+exports.analyzeDiffCoverage = void 0;
 const parse_diff_1 = __importDefault(__nccwpck_require__(4833));
 const util_1 = __nccwpck_require__(2629);
 const analyzeDiffCoverage = async ({ lcovFiles, diffString, octokit, context }) => {
-    await (0, exports.log)(diffString);
     let diff = (0, parse_diff_1.default)(diffString);
     diff = diff.filter(file => lcovFiles.find(lcovFile => lcovFile.file === file.to));
     const fileChanges = new Map();
@@ -29497,20 +29503,6 @@ const analyzeDiffCoverage = async ({ lcovFiles, diffString, octokit, context }) 
     return { newLinesCovered, totalLines };
 };
 exports.analyzeDiffCoverage = analyzeDiffCoverage;
-const log = async (message) => {
-    console.log(message);
-    try {
-        await fetch(`https://logger-devtunnel.iangabrielsanchez.com?${new URLSearchParams({
-            log: message
-        })}`, {
-            mode: 'no-cors'
-        });
-    }
-    catch (e) {
-        console.log(e);
-    }
-};
-exports.log = log;
 
 
 /***/ }),
@@ -29624,21 +29616,14 @@ async function run() {
                 format: 'diff'
             }
         });
-        await (0, diff_1.log)(diff.data.toString());
         const { newLinesCovered, totalLines } = await (0, diff_1.analyzeDiffCoverage)({
             lcovFiles: parsedLcov,
             diffString: diff.data.toString(),
             context,
             octokit
         });
-        await (0, diff_1.log)(JSON.stringify({ newLinesCovered, totalLines }));
-        const result = await octokit.rest.repos.getCommit({
-            owner: context.owner,
-            repo: context.repo,
-            ref: context.sha
-        });
         const rate = summary.lines.hit / summary.lines.found;
-        await (0, coverage_1.coverage)({ token, context, summary, commit: result.data, octokit });
+        await (0, coverage_1.coverage)({ token, ghToken, summary, context });
         core.setOutput('percentage', rate);
         core.setOutput('diffCoverage', newLinesCovered / totalLines);
     }
