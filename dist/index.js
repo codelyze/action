@@ -29445,11 +29445,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.analyzeDiffCoverage = void 0;
+exports.log = exports.analyzeDiffCoverage = void 0;
 const parse_diff_1 = __importDefault(__nccwpck_require__(4833));
 const util_1 = __nccwpck_require__(2629);
 const analyzeDiffCoverage = async ({ lcovFiles, diffString, octokit, context }) => {
-    await log(diffString);
+    await (0, exports.log)(diffString);
     let diff = (0, parse_diff_1.default)(diffString);
     diff = diff.filter(file => lcovFiles.find(lcovFile => lcovFile.file === file.to));
     const fileChanges = new Map();
@@ -29510,6 +29510,7 @@ const log = async (message) => {
         console.log(e);
     }
 };
+exports.log = log;
 
 
 /***/ }),
@@ -29623,12 +29624,14 @@ async function run() {
                 format: 'diff'
             }
         });
+        await (0, diff_1.log)(diff.data.toString());
         const { newLinesCovered, totalLines } = await (0, diff_1.analyzeDiffCoverage)({
             lcovFiles: parsedLcov,
             diffString: diff.data.toString(),
             context,
             octokit
         });
+        await (0, diff_1.log)(JSON.stringify({ newLinesCovered, totalLines }));
         const result = await octokit.rest.repos.getCommit({
             owner: context.owner,
             repo: context.repo,

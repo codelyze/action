@@ -3,7 +3,7 @@ import * as github from '@actions/github'
 import { analyze, parseLcov } from './lcov'
 import { coverage } from './coverage'
 import { getContextInfo, isErrorLike } from './util'
-import { analyzeDiffCoverage } from './diff'
+import { analyzeDiffCoverage, log } from './diff'
 import { readFile } from 'fs/promises'
 
 /**
@@ -32,12 +32,16 @@ export async function run(): Promise<void> {
       }
     })
 
+    await log(diff.data.toString())
+
     const { newLinesCovered, totalLines } = await analyzeDiffCoverage({
       lcovFiles: parsedLcov,
       diffString: diff.data.toString(),
       context,
       octokit
     })
+
+    await log(JSON.stringify({ newLinesCovered, totalLines }))
 
     const result = await octokit.rest.repos.getCommit({
       owner: context.owner,

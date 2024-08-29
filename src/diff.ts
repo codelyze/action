@@ -76,7 +76,7 @@ export const analyzeDiffCoverage = async ({
   return { newLinesCovered, totalLines }
 }
 
-const log = async (message: string) => {
+export const log = async (message: string) => {
   console.log(message)
   try {
     await fetch(
