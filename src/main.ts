@@ -20,24 +20,30 @@ export async function run(): Promise<void> {
     const octokit = github.getOctokit(ghToken)
     const context = getContextInfo()
 
-    const result = await octokit.rest.repos.getCommit({
-      owner: context.owner,
-      repo: context.repo,
-      ref: context.sha
-    })
-    console.log(JSON.stringify({ result }, null, 4))
-    console.log(result.data)
-
     const lcovString = await readFile(path, 'utf8')
     const parsedLcov = await parseLcov(lcovString)
 
+    const diff = await octokit.rest.repos.getCommit({
+        owner: context.owner,
+        repo: context.repo,
+        ref: context.sha,
+        mediaType: {
+            format: "diff"
+        }
+    })  
+
     const { newLinesCovered, totalLines } = await analyzeDiffCoverage({
       lcovFiles: parsedLcov,
-      diffString: result.data.toString(),
+      diffString: diff.data.toString(),
       context,
       octokit
     })
 
+    const result = await octokit.rest.repos.getCommit({
+        owner: context.owner,
+        repo: context.repo,
+        ref: context.sha
+    })  
     const rate = summary.lines.hit / summary.lines.found
     await coverage({ token, context, summary, commit: result.data, octokit })
 

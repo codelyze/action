@@ -9,7 +9,7 @@ describe('diff', () => {
   // Correctly calculates coverage percentage for added lines in diff
   it('should correctly calculate coverage percentage for added lines in diff', async () => {
     const diffString = readFileSync(
-      `${__dirname}/fixture/diff/diff.patch`,
+      `${__dirname}/fixture/diff/diff.diff`,
       'utf-8'
     )
     const lcovRaw = readFileSync(
