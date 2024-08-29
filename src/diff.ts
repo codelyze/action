@@ -5,18 +5,25 @@ import { percentString } from './util'
 
 interface Props {
   lcovFiles: LcovFile[]
-  diffString: string
   octokit: Octokit
   context: ContextInfo
 }
 
 export const analyzeDiffCoverage = async ({
   lcovFiles,
-  diffString,
   octokit,
   context
 }: Props) => {
-  let diff = parseDiff(diffString)
+  const result = await octokit.rest.repos.getCommit({
+    owner: context.owner,
+    repo: context.repo,
+    ref: context.sha,
+    mediaType: {
+      format: 'diff'
+    }
+  })
+
+  let diff = parseDiff(result.data.toString())
 
   diff = diff.filter(file =>
     lcovFiles.find(lcovFile => lcovFile.file === file.to)

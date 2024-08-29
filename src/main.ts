@@ -23,18 +23,8 @@ export async function run(): Promise<void> {
     const lcovString = await readFile(path, 'utf8')
     const parsedLcov = await parseLcov(lcovString)
 
-    const diff = await octokit.rest.repos.getCommit({
-      owner: context.owner,
-      repo: context.repo,
-      ref: context.sha,
-      mediaType: {
-        format: 'diff'
-      }
-    })
-
     const { newLinesCovered, totalLines } = await analyzeDiffCoverage({
       lcovFiles: parsedLcov,
-      diffString: diff.data.toString(),
       context,
       octokit
     })

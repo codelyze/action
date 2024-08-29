@@ -29395,7 +29395,7 @@ const coverage = async ({ token, ghToken, summary, context }) => {
         token,
         owner,
         repo,
-        branch: ref.replace('refs/heads/', ''),
+        branch: ref?.replace('refs/heads/', ''),
         commit: sha,
         compareSha,
         linesFound: summary.lines.found,
@@ -29455,8 +29455,16 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.analyzeDiffCoverage = void 0;
 const parse_diff_1 = __importDefault(__nccwpck_require__(4833));
 const util_1 = __nccwpck_require__(2629);
-const analyzeDiffCoverage = async ({ lcovFiles, diffString, octokit, context }) => {
-    let diff = (0, parse_diff_1.default)(diffString);
+const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
+    const result = await octokit.rest.repos.getCommit({
+        owner: context.owner,
+        repo: context.repo,
+        ref: context.sha,
+        mediaType: {
+            format: 'diff'
+        }
+    });
+    let diff = (0, parse_diff_1.default)(result.data.toString());
     diff = diff.filter(file => lcovFiles.find(lcovFile => lcovFile.file === file.to));
     const fileChanges = new Map();
     for (const file of diff) {
@@ -29608,17 +29616,8 @@ async function run() {
         const context = (0, util_1.getContextInfo)();
         const lcovString = await (0, promises_1.readFile)(path, 'utf8');
         const parsedLcov = await (0, lcov_1.parseLcov)(lcovString);
-        const diff = await octokit.rest.repos.getCommit({
-            owner: context.owner,
-            repo: context.repo,
-            ref: context.sha,
-            mediaType: {
-                format: 'diff'
-            }
-        });
         const { newLinesCovered, totalLines } = await (0, diff_1.analyzeDiffCoverage)({
             lcovFiles: parsedLcov,
-            diffString: diff.data.toString(),
             context,
             octokit
         });

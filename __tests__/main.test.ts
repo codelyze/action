@@ -50,8 +50,6 @@ describe('action', () => {
         compareSha: 'compareSha'
       }
     })
-    // readFile = jest.spyOn(promises, 'readFile').mockImplementation()
-    // parseLcov = jest.spyOn(lcov, 'parseLcov').mockImplementation()
   })
 
   it('sets the output', async () => {

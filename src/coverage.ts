@@ -25,7 +25,7 @@ export const coverage = async ({ token, ghToken, summary, context }: Props) => {
     token,
     owner,
     repo,
-    branch: ref.replace('refs/heads/', ''),
+    branch: ref?.replace('refs/heads/', ''),
     commit: sha,
     compareSha,
     linesFound: summary.lines.found,
