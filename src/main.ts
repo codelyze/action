@@ -24,13 +24,13 @@ export async function run(): Promise<void> {
     const parsedLcov = await parseLcov(lcovString)
 
     const diff = await octokit.rest.repos.getCommit({
-        owner: context.owner,
-        repo: context.repo,
-        ref: context.sha,
-        mediaType: {
-            format: "diff"
-        }
-    })  
+      owner: context.owner,
+      repo: context.repo,
+      ref: context.sha,
+      mediaType: {
+        format: 'diff'
+      }
+    })
 
     const { newLinesCovered, totalLines } = await analyzeDiffCoverage({
       lcovFiles: parsedLcov,
@@ -40,10 +40,10 @@ export async function run(): Promise<void> {
     })
 
     const result = await octokit.rest.repos.getCommit({
-        owner: context.owner,
-        repo: context.repo,
-        ref: context.sha
-    })  
+      owner: context.owner,
+      repo: context.repo,
+      ref: context.sha
+    })
     const rate = summary.lines.hit / summary.lines.found
     await coverage({ token, context, summary, commit: result.data, octokit })
 
