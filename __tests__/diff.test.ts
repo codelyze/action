@@ -99,8 +99,8 @@ describe('diff', () => {
       repo: 'repo',
       sha: 'sha',
       context: 'codelyze/patch',
-      state: 'success',
-      description: 'NaN% of diff hit'
+      state: 'failure',
+      description: 'No diff detected'
     })
   })
 })

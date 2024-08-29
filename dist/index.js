@@ -29480,13 +29480,18 @@ const analyzeDiffCoverage = async ({ lcovFiles, diffString, octokit, context }) 
             }
         }
     }
+    const success = totalLines > 0;
+    const state = success ? 'success' : 'failure';
+    const description = success
+        ? `${(0, util_1.percentString)(newLinesCovered / totalLines)} of diff hit`
+        : 'No diff detected';
     await octokit.rest.repos.createCommitStatus({
         owner: context.owner,
         repo: context.repo,
         sha: context.sha,
         context: 'codelyze/patch',
-        state: 'success',
-        description: `${(0, util_1.percentString)(newLinesCovered / totalLines)} of diff hit`
+        state,
+        description
     });
     return { newLinesCovered, totalLines };
 };
@@ -29599,6 +29604,8 @@ async function run() {
             repo: context.repo,
             ref: context.sha
         });
+        console.log(JSON.stringify({ result }, null, 4));
+        console.log(result.data);
         const lcovString = await (0, promises_1.readFile)(path, 'utf8');
         const parsedLcov = await (0, lcov_1.parseLcov)(lcovString);
         const { newLinesCovered, totalLines } = await (0, diff_1.analyzeDiffCoverage)({

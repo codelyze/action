@@ -57,13 +57,19 @@ export const analyzeDiffCoverage = async ({
     }
   }
 
+  const success = totalLines > 0
+  const state = success ? 'success' : 'failure'
+  const description = success
+    ? `${percentString(newLinesCovered / totalLines)} of diff hit`
+    : 'No diff detected'
+
   await octokit.rest.repos.createCommitStatus({
     owner: context.owner,
     repo: context.repo,
     sha: context.sha,
     context: 'codelyze/patch',
-    state: 'success',
-    description: `${percentString(newLinesCovered / totalLines)} of diff hit`
+    state,
+    description
   })
 
   return { newLinesCovered, totalLines }

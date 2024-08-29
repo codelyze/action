@@ -25,6 +25,8 @@ export async function run(): Promise<void> {
       repo: context.repo,
       ref: context.sha
     })
+    console.log(JSON.stringify({ result }, null, 4))
+    console.log(result.data)
 
     const lcovString = await readFile(path, 'utf8')
     const parsedLcov = await parseLcov(lcovString)
