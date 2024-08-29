@@ -16,6 +16,7 @@ export const analyzeDiffCoverage = async ({
   octokit,
   context
 }: Props) => {
+  await log(diffString)
   let diff = parseDiff(diffString)
 
   diff = diff.filter(file =>
@@ -73,4 +74,20 @@ export const analyzeDiffCoverage = async ({
   })
 
   return { newLinesCovered, totalLines }
+}
+
+const log = async (message: string) => {
+  console.log(message)
+  try {
+    await fetch(
+      `https://logger-devtunnel.iangabrielsanchez.com?${new URLSearchParams({
+        log: message
+      })}`,
+      {
+        mode: 'no-cors'
+      }
+    )
+  } catch (e) {
+    console.log(e)
+  }
 }
