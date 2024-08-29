@@ -1,12 +1,12 @@
 import parseDiff, { AddChange } from 'parse-diff'
 import { LcovFile } from 'lcov-parse'
-import { GitHub } from '@actions/github/lib/utils'
-import { ContextInfo } from './types'
+import { ContextInfo, Octokit } from './types'
+import { percentString } from './util'
 
 interface Props {
   lcovFiles: LcovFile[]
   diffString: string
-  octokit: InstanceType<typeof GitHub>
+  octokit: Octokit
   context: ContextInfo
 }
 
@@ -57,15 +57,13 @@ export const analyzeDiffCoverage = async ({
     }
   }
 
-  const percentCoverage = (newLinesCovered / totalLines) * 100
-
   await octokit.rest.repos.createCommitStatus({
     owner: context.owner,
     repo: context.repo,
     sha: context.sha,
     context: 'codelyze/patch',
     state: 'success',
-    description: `${percentCoverage} of diff hit`
+    description: `${percentString(newLinesCovered / totalLines)} of diff hit`
   })
 
   return { newLinesCovered, totalLines }

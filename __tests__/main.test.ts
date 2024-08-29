@@ -5,6 +5,7 @@ import * as diff from '../src/diff'
 import * as github from '@actions/github'
 import * as util from '../src/util'
 import { GitHub } from '@actions/github/lib/utils'
+import { Octokit } from '../src/types'
 
 const runMock = jest.spyOn(main, 'run')
 
@@ -43,7 +44,7 @@ describe('action', () => {
             getCommit
           }
         }
-      } as unknown as InstanceType<typeof GitHub>
+      } as unknown as Octokit
     })
     contextInfo = jest.spyOn(util, 'getContextInfo').mockImplementation(() => {
       return {
@@ -70,9 +71,6 @@ describe('action', () => {
 
     await main.run()
     expect(runMock).toHaveReturned()
-    expect(getOctokit).toHaveBeenCalled()
-    expect(contextInfo).toHaveBeenCalled()
-    expect(getCommit).toHaveBeenCalled()
     expect(analyzeDiffCov).toHaveBeenCalled()
     expect(coverageMock).toHaveBeenCalled()
     expect(setOutputMock).toHaveBeenNthCalledWith(

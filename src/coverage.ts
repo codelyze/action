@@ -3,16 +3,14 @@ import * as github from '@actions/github'
 import type { LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
 import { percentString } from './util'
-import { ContextInfo } from './types'
-import { Endpoints } from '@octokit/types'
-import { GitHub } from '@actions/github/lib/utils'
+import { ContextInfo, GithubCommit, Octokit } from './types'
 
 interface Props {
   token: string
   context: ContextInfo
   summary: LcovSummary
-  commit: Endpoints['GET /repos/{owner}/{repo}/commits/{ref}']['response']['data']
-  octokit: InstanceType<typeof GitHub>
+  commit: GithubCommit
+  octokit: Octokit
 }
 
 export const coverage = async ({
