@@ -8,10 +8,16 @@ describe('diff', () => {
 
   // Correctly calculates coverage percentage for added lines in diff
   it('should correctly calculate coverage percentage for added lines in diff', async () => {
-    const diffString = readFileSync(`${__dirname}/fixture/diff/diff.patch`, 'utf-8')
-    const lcovRaw = readFileSync(`${__dirname}/fixture/diff/parsedLcov.json`, 'utf-8')
-    const lcovFiles:LcovFile[] = JSON.parse(lcovRaw);
-    console.log({lcovRaw, lcovFiles})
+    const diffString = readFileSync(
+      `${__dirname}/fixture/diff/diff.patch`,
+      'utf-8'
+    )
+    const lcovRaw = readFileSync(
+      `${__dirname}/fixture/diff/parsedLcov.json`,
+      'utf-8'
+    )
+    const lcovFiles: LcovFile[] = JSON.parse(lcovRaw)
+    console.log({ lcovRaw, lcovFiles })
 
     const octokit = {
       rest: {
@@ -44,7 +50,7 @@ describe('diff', () => {
       sha: 'sha',
       context: 'codelyze/patch',
       state: 'success',
-      description: "91.67% of diff hit"
+      description: '91.67% of diff hit'
     })
   })
 
@@ -72,11 +78,11 @@ describe('diff', () => {
     } as unknown as Octokit
 
     const context: ContextInfo = {
-        owner: 'owner',
-        repo: 'repo',
-        sha: 'sha',
-        ref: 'ref',
-        compareSha: 'compareSha'
+      owner: 'owner',
+      repo: 'repo',
+      sha: 'sha',
+      ref: 'ref',
+      compareSha: 'compareSha'
     }
 
     const result = await analyzeDiffCoverage({

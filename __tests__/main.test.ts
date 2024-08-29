@@ -4,7 +4,6 @@ import * as cov from '../src/coverage'
 import * as diff from '../src/diff'
 import * as github from '@actions/github'
 import * as util from '../src/util'
-import { GitHub } from '@actions/github/lib/utils'
 import { Octokit } from '../src/types'
 
 const runMock = jest.spyOn(main, 'run')
@@ -15,9 +14,6 @@ let setFailedMock: jest.SpyInstance
 let setOutputMock: jest.SpyInstance
 let coverageMock: jest.SpyInstance
 let analyzeDiffCov: jest.SpyInstance
-let getOctokit: jest.SpyInstance
-let contextInfo: jest.SpyInstance
-let getCommit: jest.SpyInstance
 
 describe('action', () => {
   beforeEach(() => {
@@ -36,17 +32,16 @@ describe('action', () => {
           totalLines: 13
         })
       )
-    getCommit = jest.fn(async () => Promise.resolve({ data: {} }))
-    getOctokit = jest.spyOn(github, 'getOctokit').mockImplementation(() => {
+    jest.spyOn(github, 'getOctokit').mockImplementation(() => {
       return {
         rest: {
           repos: {
-            getCommit
+            getCommit: jest.fn(async () => Promise.resolve({ data: {} }))
           }
         }
       } as unknown as Octokit
     })
-    contextInfo = jest.spyOn(util, 'getContextInfo').mockImplementation(() => {
+    jest.spyOn(util, 'getContextInfo').mockImplementation(() => {
       return {
         repo: 'repo',
         owner: 'owner',

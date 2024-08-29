@@ -29447,6 +29447,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.analyzeDiffCoverage = void 0;
 const parse_diff_1 = __importDefault(__nccwpck_require__(4833));
+const util_1 = __nccwpck_require__(2629);
 const analyzeDiffCoverage = async ({ lcovFiles, diffString, octokit, context }) => {
     let diff = (0, parse_diff_1.default)(diffString);
     diff = diff.filter(file => lcovFiles.find(lcovFile => lcovFile.file === file.to));
@@ -29479,14 +29480,13 @@ const analyzeDiffCoverage = async ({ lcovFiles, diffString, octokit, context }) 
             }
         }
     }
-    const percentCoverage = (newLinesCovered / totalLines) * 100;
     await octokit.rest.repos.createCommitStatus({
         owner: context.owner,
         repo: context.repo,
         sha: context.sha,
         context: 'codelyze/patch',
         state: 'success',
-        description: `${percentCoverage} of diff hit`
+        description: `${(0, util_1.percentString)(newLinesCovered / totalLines)} of diff hit`
     });
     return { newLinesCovered, totalLines };
 };
@@ -29533,7 +29533,6 @@ const summarize = (lcovData) => {
 exports.summarize = summarize;
 const analyze = async (path) => {
     const file = await (0, promises_1.readFile)(path, 'utf8');
-    console.log(file);
     const data = await (0, exports.parseLcov)(file);
     const summary = (0, exports.summarize)(data);
     return {
