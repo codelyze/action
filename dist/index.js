@@ -29456,10 +29456,10 @@ exports.analyzeDiffCoverage = void 0;
 const parse_diff_1 = __importDefault(__nccwpck_require__(4833));
 const util_1 = __nccwpck_require__(2629);
 const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
-    const result = await octokit.rest.repos.getCommit({
+    const result = await octokit.rest.repos.compareCommitsWithBasehead({
         owner: context.owner,
         repo: context.repo,
-        ref: context.sha,
+        basehead: `${context.compareSha}...${context.sha}`,
         mediaType: {
             format: 'diff'
         }
@@ -29496,7 +29496,6 @@ const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
         }
     }
     const success = totalLines > 0;
-    const state = success ? 'success' : 'failure';
     const description = success
         ? `${(0, util_1.percentString)(newLinesCovered / totalLines)} of diff hit`
         : 'No diff detected';
@@ -29505,7 +29504,7 @@ const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
         repo: context.repo,
         sha: context.sha,
         context: 'codelyze/patch',
-        state,
+        state: 'success',
         description
     });
     return { newLinesCovered, totalLines };

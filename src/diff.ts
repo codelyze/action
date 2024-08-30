@@ -14,10 +14,10 @@ export const analyzeDiffCoverage = async ({
   octokit,
   context
 }: Props) => {
-  const result = await octokit.rest.repos.getCommit({
+  const result = await octokit.rest.repos.compareCommitsWithBasehead({
     owner: context.owner,
     repo: context.repo,
-    ref: context.sha,
+    basehead: `${context.compareSha}...${context.sha}`,
     mediaType: {
       format: 'diff'
     }
@@ -65,7 +65,6 @@ export const analyzeDiffCoverage = async ({
   }
 
   const success = totalLines > 0
-  const state = success ? 'success' : 'failure'
   const description = success
     ? `${percentString(newLinesCovered / totalLines)} of diff hit`
     : 'No diff detected'
@@ -75,7 +74,7 @@ export const analyzeDiffCoverage = async ({
     repo: context.repo,
     sha: context.sha,
     context: 'codelyze/patch',
-    state,
+    state: 'success',
     description
   })
 

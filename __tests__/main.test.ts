@@ -4,7 +4,6 @@ import * as cov from '../src/coverage'
 import * as diff from '../src/diff'
 import * as github from '@actions/github'
 import * as util from '../src/util'
-import { Octokit } from '../src/types'
 
 const runMock = jest.spyOn(main, 'run')
 
@@ -32,15 +31,7 @@ describe('action', () => {
           totalLines: 13
         })
       )
-    jest.spyOn(github, 'getOctokit').mockImplementation(() => {
-      return {
-        rest: {
-          repos: {
-            getCommit: jest.fn(async () => Promise.resolve({ data: {} }))
-          }
-        }
-      } as unknown as Octokit
-    })
+    jest.spyOn(github, 'getOctokit').mockImplementation()
     jest.spyOn(util, 'getContextInfo').mockImplementation(() => {
       return {
         repo: 'repo',

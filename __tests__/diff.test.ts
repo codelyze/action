@@ -19,7 +19,9 @@ describe('diff', () => {
       rest: {
         repos: {
           createCommitStatus: jest.fn(),
-          getCommit: jest.fn(async () => Promise.resolve({ data: diffString }))
+          compareCommitsWithBasehead: jest.fn(async () =>
+            Promise.resolve({ data: diffString })
+          )
         }
       }
     } as unknown as Octokit
@@ -68,7 +70,9 @@ describe('diff', () => {
       rest: {
         repos: {
           createCommitStatus: jest.fn(),
-          getCommit: jest.fn(async () => Promise.resolve({ data: '' }))
+          compareCommitsWithBasehead: jest.fn(async () =>
+            Promise.resolve({ data: '' })
+          )
         }
       }
     } as unknown as Octokit
@@ -94,7 +98,7 @@ describe('diff', () => {
       repo: 'repo',
       sha: 'sha',
       context: 'codelyze/patch',
-      state: 'failure',
+      state: 'success',
       description: 'No diff detected'
     })
   })
