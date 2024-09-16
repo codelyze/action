@@ -1,7 +1,6 @@
 import parseDiff, { AddChange } from 'parse-diff'
 import { LcovFile } from 'lcov-parse'
 import { ContextInfo, Octokit } from './types'
-import { percentString } from './util'
 
 interface Props {
   lcovFiles: LcovFile[]
@@ -9,11 +8,16 @@ interface Props {
   context: ContextInfo
 }
 
+export interface DiffCoverageOutput {
+  linesHit: number
+  linesFound: number
+}
+
 export const analyzeDiffCoverage = async ({
   lcovFiles,
   octokit,
   context
-}: Props) => {
+}: Props): Promise<DiffCoverageOutput> => {
   const result = await octokit.rest.repos.compareCommitsWithBasehead({
     owner: context.owner,
     repo: context.repo,
@@ -43,8 +47,8 @@ export const analyzeDiffCoverage = async ({
     }
   }
 
-  let newLinesCovered = 0
-  let totalLines = 0
+  let linesHit = 0
+  let linesFound = 0
 
   for (const lcovFile of lcovFiles) {
     const changes = fileChanges.get(lcovFile.file)
@@ -57,26 +61,12 @@ export const analyzeDiffCoverage = async ({
 
       if (inChanges) {
         if (detail.hit > 0) {
-          newLinesCovered++
+          linesHit++
         }
-        totalLines++
+        linesFound++
       }
     }
   }
 
-  const success = totalLines > 0
-  const description = success
-    ? `${percentString(newLinesCovered / totalLines)} of diff hit`
-    : 'No diff detected'
-
-  await octokit.rest.repos.createCommitStatus({
-    owner: context.owner,
-    repo: context.repo,
-    sha: context.sha,
-    context: 'codelyze/patch',
-    state: 'success',
-    description
-  })
-
-  return { newLinesCovered, totalLines }
+  return { linesFound, linesHit }
 }
