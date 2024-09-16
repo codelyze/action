@@ -29383,7 +29383,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const codelyze = __importStar(__nccwpck_require__(9001));
 const util_1 = __nccwpck_require__(2629);
-const coverage = async ({ token, ghToken, summary, context }) => {
+const coverage = async ({ token, ghToken, summary, context, diffCoverage }) => {
     const octokit = github.getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = context;
     const { data: commit } = await octokit.rest.repos.getCommit({
@@ -29428,15 +29428,23 @@ const coverage = async ({ token, ghToken, summary, context }) => {
             description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
         };
     })();
-    const client = utoken ? github.getOctokit(utoken) : octokit;
-    const { data: status } = await client.rest.repos.createCommitStatus({
-        owner,
-        repo,
-        sha,
-        context: 'codelyze/project',
+    const { data: status } = await (0, util_1.createCommitStatus)({
+        token: utoken ? utoken : ghToken,
+        context,
+        commitContext: 'codelyze/project',
         ...message
     });
-    return { status, rate, diff };
+    const { linesHit, linesFound } = diffCoverage;
+    const { data: diffCoverageStatus } = await (0, util_1.createCommitStatus)({
+        token: utoken ? utoken : ghToken,
+        context,
+        commitContext: 'codelyze/patch',
+        state: linesFound > 0 ? 'success' : 'failure',
+        description: linesFound > 0
+            ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
+            : 'No diff detected'
+    });
+    return { status, rate, diff, diffCoverageStatus };
 };
 exports.coverage = coverage;
 
@@ -29454,7 +29462,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.analyzeDiffCoverage = void 0;
 const parse_diff_1 = __importDefault(__nccwpck_require__(4833));
-const util_1 = __nccwpck_require__(2629);
 const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
     const result = await octokit.rest.repos.compareCommitsWithBasehead({
         owner: context.owner,
@@ -29478,8 +29485,8 @@ const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
             }
         }
     }
-    let newLinesCovered = 0;
-    let totalLines = 0;
+    let linesHit = 0;
+    let linesFound = 0;
     for (const lcovFile of lcovFiles) {
         const changes = fileChanges.get(lcovFile.file);
         if (!changes) {
@@ -29489,25 +29496,13 @@ const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
             const inChanges = changes.find(change => change.ln === detail.line);
             if (inChanges) {
                 if (detail.hit > 0) {
-                    newLinesCovered++;
+                    linesHit++;
                 }
-                totalLines++;
+                linesFound++;
             }
         }
     }
-    const success = totalLines > 0;
-    const description = success
-        ? `${(0, util_1.percentString)(newLinesCovered / totalLines)} of diff hit`
-        : 'No diff detected';
-    await octokit.rest.repos.createCommitStatus({
-        owner: context.owner,
-        repo: context.repo,
-        sha: context.sha,
-        context: 'codelyze/patch',
-        state: 'success',
-        description
-    });
-    return { newLinesCovered, totalLines };
+    return { linesFound, linesHit };
 };
 exports.analyzeDiffCoverage = analyzeDiffCoverage;
 
@@ -29523,16 +29518,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.analyze = exports.summarize = exports.parseLcov = void 0;
+exports.analyze = exports.summarize = exports.parse = void 0;
 const lcov_parse_1 = __importDefault(__nccwpck_require__(7454));
 const promises_1 = __nccwpck_require__(3292);
-const parseLcov = async (data) => new Promise((resolve, reject) => (0, lcov_parse_1.default)(data, (err, res) => {
+const parse = async (data) => new Promise((resolve, reject) => (0, lcov_parse_1.default)(data, (err, res) => {
     if (err) {
         return reject(err);
     }
     resolve(res ?? []);
 }));
-exports.parseLcov = parseLcov;
+exports.parse = parse;
 const summarize = (lcovData) => {
     const empty = { hit: 0, found: 0 };
     const keys = ['lines', 'functions', 'branches'];
@@ -29552,7 +29547,7 @@ const summarize = (lcovData) => {
 exports.summarize = summarize;
 const analyze = async (path) => {
     const file = await (0, promises_1.readFile)(path, 'utf8');
-    const data = await (0, exports.parseLcov)(file);
+    const data = await (0, exports.parse)(file);
     const summary = (0, exports.summarize)(data);
     return {
         data,
@@ -29600,7 +29595,6 @@ const lcov_1 = __nccwpck_require__(4888);
 const coverage_1 = __nccwpck_require__(9084);
 const util_1 = __nccwpck_require__(2629);
 const diff_1 = __nccwpck_require__(4275);
-const promises_1 = __nccwpck_require__(3292);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -29610,20 +29604,23 @@ async function run() {
         const path = core.getInput('path');
         const token = core.getInput('token');
         const ghToken = core.getInput('gh-token');
-        const { summary } = await (0, lcov_1.analyze)(path);
+        const { summary, data: lcovFiles } = await (0, lcov_1.analyze)(path);
         const octokit = github.getOctokit(ghToken);
         const context = (0, util_1.getContextInfo)();
-        const lcovString = await (0, promises_1.readFile)(path, 'utf8');
-        const parsedLcov = await (0, lcov_1.parseLcov)(lcovString);
-        const { newLinesCovered, totalLines } = await (0, diff_1.analyzeDiffCoverage)({
-            lcovFiles: parsedLcov,
+        const diffCoverage = await (0, diff_1.analyzeDiffCoverage)({
+            lcovFiles,
             context,
             octokit
         });
-        const rate = summary.lines.hit / summary.lines.found;
-        await (0, coverage_1.coverage)({ token, ghToken, summary, context });
+        const { rate } = await (0, coverage_1.coverage)({
+            token,
+            ghToken,
+            summary,
+            context,
+            diffCoverage
+        });
         core.setOutput('percentage', rate);
-        core.setOutput('diffCoverage', newLinesCovered / totalLines);
+        core.setOutput('diffCoverage', diffCoverage.linesHit / diffCoverage.linesFound);
     }
     catch (error) {
         core.debug(`${error}`);
@@ -29664,7 +29661,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getContextInfo = exports.isErrorLike = exports.percentString = void 0;
+exports.createCommitStatus = exports.getContextInfo = exports.isErrorLike = exports.percentString = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const percentString = (value, lang) => new Intl.NumberFormat(lang, {
     style: 'percent',
@@ -29691,6 +29688,19 @@ const getContextInfo = () => {
     return { repo, owner, sha, ref, compareSha };
 };
 exports.getContextInfo = getContextInfo;
+const createCommitStatus = async (props) => {
+    const client = github.getOctokit(props.token);
+    const context = props.context;
+    return await client.rest.repos.createCommitStatus({
+        owner: context.owner,
+        repo: context.repo,
+        sha: context.sha,
+        context: props.commitContext,
+        state: props.state,
+        description: props.description
+    });
+};
+exports.createCommitStatus = createCommitStatus;
 
 
 /***/ }),

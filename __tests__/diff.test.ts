@@ -40,16 +40,8 @@ describe('diff', () => {
       context
     })
 
-    expect(result.newLinesCovered).toBe(11)
-    expect(result.totalLines).toBe(12)
-    expect(octokit.rest.repos.createCommitStatus).toHaveBeenCalledWith({
-      owner: 'owner',
-      repo: 'repo',
-      sha: 'sha',
-      context: 'codelyze/patch',
-      state: 'success',
-      description: '91.67% of diff hit'
-    })
+    expect(result.linesHit).toBe(11)
+    expect(result.linesFound).toBe(12)
   })
 
   // Handles empty diffString gracefully
@@ -91,15 +83,7 @@ describe('diff', () => {
       context
     })
 
-    expect(result.newLinesCovered).toBe(0)
-    expect(result.totalLines).toBe(0)
-    expect(octokit.rest.repos.createCommitStatus).toHaveBeenCalledWith({
-      owner: 'owner',
-      repo: 'repo',
-      sha: 'sha',
-      context: 'codelyze/patch',
-      state: 'success',
-      description: 'No diff detected'
-    })
+    expect(result.linesHit).toBe(0)
+    expect(result.linesFound).toBe(0)
   })
 })

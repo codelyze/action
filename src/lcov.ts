@@ -6,7 +6,7 @@ export type LcovSummary = Record<
   { found: number; hit: number }
 >
 
-export const parseLcov = async (data: string): Promise<LcovFile[]> =>
+export const parse = async (data: string): Promise<LcovFile[]> =>
   new Promise((resolve, reject) =>
     lcov(data, (err: string | Error | null, res?: LcovFile[]) => {
       if (err) {
@@ -40,7 +40,7 @@ interface ParseResult {
 
 export const analyze = async (path: string): Promise<ParseResult> => {
   const file = await readFile(path, 'utf8')
-  const data = await parseLcov(file)
+  const data = await parse(file)
   const summary = summarize(data)
 
   return {

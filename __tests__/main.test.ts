@@ -4,6 +4,7 @@ import * as cov from '../src/coverage'
 import * as diff from '../src/diff'
 import * as github from '@actions/github'
 import * as util from '../src/util'
+import { CommitStatusResponse } from '../src/types'
 
 const runMock = jest.spyOn(main, 'run')
 
@@ -22,13 +23,20 @@ describe('action', () => {
     getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
-    coverageMock = jest.spyOn(cov, 'coverage').mockImplementation()
+    coverageMock = jest.spyOn(cov, 'coverage').mockImplementation(async () => {
+      return {
+        rate: 0.9,
+        diff: 0.9,
+        status: {} as CommitStatusResponse,
+        diffCoverageStatus: {} as CommitStatusResponse
+      }
+    })
     analyzeDiffCov = jest
       .spyOn(diff, 'analyzeDiffCoverage')
       .mockImplementation(async () =>
         Promise.resolve({
-          newLinesCovered: 12,
-          totalLines: 13
+          linesHit: 12,
+          linesFound: 13
         })
       )
     jest.spyOn(github, 'getOctokit').mockImplementation()
@@ -57,11 +65,7 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
     expect(analyzeDiffCov).toHaveBeenCalled()
     expect(coverageMock).toHaveBeenCalled()
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'percentage',
-      0.905852417302799
-    )
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'percentage', 0.9)
     expect(errorMock).not.toHaveBeenCalled()
   })
 
