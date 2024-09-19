@@ -1,0 +1,39 @@
+diff --git a/even.js b/even.js
+new file mode 100644
+index 0000000..957088c
+--- /dev/null
++++ b/even.js
+@@ -0,0 +1,10 @@
++function isEven(input){
++    const remainder = input % 2;
++    if(remainder === 0){
++        return true;
++    }
++    return false;
++}
++
++exports.isEven = isEven
++module.exports  = {isEven}
+\ No newline at end of file
+diff --git a/index.js b/index.js
+index 67ca8cc..e0392c7 100644
+--- a/index.js
++++ b/index.js
+@@ -1,8 +1,14 @@
++const { isEven } = require('./even')
++
+ function oddOrEven(input){
+-    if(input%2 === 0){
+-        return "even";
++    const isInputEven = isEven(input);
++    if(isInputEven){
++        return "even"
++    }
++    if(1 == 0){
++        return "impossible"
+     }
+-    console.log("here")
++
+     return "odd"
+ }
+ 

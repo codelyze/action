@@ -2,27 +2,27 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import type { LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
-import { percentString } from './util'
+import { createCommitStatus, percentString } from './util'
+import { ContextInfo } from './types'
+import { DiffCoverageOutput } from './diff'
 
 interface Props {
   token: string
   ghToken: string
   summary: LcovSummary
+  context: ContextInfo
+  diffCoverage: DiffCoverageOutput
 }
 
-const getInfo = () => {
-  const ctx = github.context
-  const { owner, repo } = ctx.repo
-  const pr = ctx.payload.pull_request
-  const sha = pr?.head.sha ?? ctx.sha
-  const ref = pr?.head.ref ?? ctx.ref
-  const compareSha = pr?.base.sha ?? ctx.payload.before
-  return { repo, owner, sha, ref, compareSha }
-}
-
-export const coverage = async ({ token, ghToken, summary }: Props) => {
+export const coverage = async ({
+  token,
+  ghToken,
+  summary,
+  context,
+  diffCoverage
+}: Props) => {
   const octokit = github.getOctokit(ghToken)
-  const { repo, owner, ref, sha, compareSha } = getInfo()
+  const { repo, owner, ref, sha, compareSha } = context
 
   const { data: commit } = await octokit.rest.repos.getCommit({
     owner,
@@ -72,14 +72,25 @@ export const coverage = async ({ token, ghToken, summary }: Props) => {
       description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
     }
   })()
-  const client = utoken ? github.getOctokit(utoken) : octokit
-  const { data: status } = await client.rest.repos.createCommitStatus({
-    owner,
-    repo,
-    sha,
-    context: 'codelyze/project',
+
+  const { data: status } = await createCommitStatus({
+    token: utoken ? utoken : ghToken,
+    context,
+    commitContext: 'codelyze/project',
     ...message
   })
 
-  return { status, rate, diff }
+  const { linesHit, linesFound } = diffCoverage
+  const { data: diffCoverageStatus } = await createCommitStatus({
+    token: utoken ? utoken : ghToken,
+    context,
+    commitContext: 'codelyze/patch',
+    state: linesFound > 0 ? 'success' : 'failure',
+    description:
+      linesFound > 0
+        ? `${percentString(linesHit / linesFound)} of diff hit`
+        : 'No diff detected'
+  })
+
+  return { status, rate, diff, diffCoverageStatus }
 }
