@@ -29439,7 +29439,7 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage }) => {
         token: utoken ? utoken : ghToken,
         context,
         commitContext: 'codelyze/patch',
-        state: linesFound > 0 ? 'success' : 'failure',
+        state: 'success',
         description: linesFound > 0
             ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
             : 'No diff detected'

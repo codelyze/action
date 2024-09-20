@@ -85,7 +85,7 @@ export const coverage = async ({
     token: utoken ? utoken : ghToken,
     context,
     commitContext: 'codelyze/patch',
-    state: linesFound > 0 ? 'success' : 'failure',
+    state: 'success',
     description:
       linesFound > 0
         ? `${percentString(linesHit / linesFound)} of diff hit`
