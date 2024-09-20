@@ -1,152 +1,152 @@
 [
-    {
-        "lines": {
-            "found": 6,
-            "hit": 6,
-            "details": [
-                {
-                    "line": 2,
-                    "hit": 2
-                },
-                {
-                    "line": 3,
-                    "hit": 2
-                },
-                {
-                    "line": 4,
-                    "hit": 1
-                },
-                {
-                    "line": 6,
-                    "hit": 1
-                },
-                {
-                    "line": 9,
-                    "hit": 1
-                },
-                {
-                    "line": 10,
-                    "hit": 1
-                }
-            ]
+  {
+    "lines": {
+      "found": 6,
+      "hit": 6,
+      "details": [
+        {
+          "line": 2,
+          "hit": 2
         },
-        "functions": {
-            "hit": 1,
-            "found": 1,
-            "details": [
-                {
-                    "name": "isEven",
-                    "line": 1,
-                    "hit": 2
-                }
-            ]
+        {
+          "line": 3,
+          "hit": 2
         },
-        "branches": {
-            "hit": 2,
-            "found": 2,
-            "details": [
-                {
-                    "line": 3,
-                    "block": 0,
-                    "branch": 0,
-                    "taken": 1
-                },
-                {
-                    "line": 3,
-                    "block": 0,
-                    "branch": 1,
-                    "taken": 1
-                }
-            ]
+        {
+          "line": 4,
+          "hit": 1
         },
-        "title": "",
-        "file": "even.js"
+        {
+          "line": 6,
+          "hit": 1
+        },
+        {
+          "line": 9,
+          "hit": 1
+        },
+        {
+          "line": 10,
+          "hit": 1
+        }
+      ]
     },
-    {
-        "lines": {
-            "found": 9,
-            "hit": 8,
-            "details": [
-                {
-                    "line": 1,
-                    "hit": 1
-                },
-                {
-                    "line": 4,
-                    "hit": 2
-                },
-                {
-                    "line": 5,
-                    "hit": 2
-                },
-                {
-                    "line": 6,
-                    "hit": 1
-                },
-                {
-                    "line": 8,
-                    "hit": 1
-                },
-                {
-                    "line": 9,
-                    "hit": 0
-                },
-                {
-                    "line": 12,
-                    "hit": 1
-                },
-                {
-                    "line": 15,
-                    "hit": 1
-                },
-                {
-                    "line": 16,
-                    "hit": 1
-                }
-            ]
+    "functions": {
+      "hit": 1,
+      "found": 1,
+      "details": [
+        {
+          "name": "isEven",
+          "line": 1,
+          "hit": 2
+        }
+      ]
+    },
+    "branches": {
+      "hit": 2,
+      "found": 2,
+      "details": [
+        {
+          "line": 3,
+          "block": 0,
+          "branch": 0,
+          "taken": 1
         },
-        "functions": {
-            "hit": 1,
-            "found": 1,
-            "details": [
-                {
-                    "name": "oddOrEven",
-                    "line": 3,
-                    "hit": 2
-                }
-            ]
+        {
+          "line": 3,
+          "block": 0,
+          "branch": 1,
+          "taken": 1
+        }
+      ]
+    },
+    "title": "",
+    "file": "even.js"
+  },
+  {
+    "lines": {
+      "found": 9,
+      "hit": 8,
+      "details": [
+        {
+          "line": 1,
+          "hit": 1
         },
-        "branches": {
-            "hit": 3,
-            "found": 4,
-            "details": [
-                {
-                    "line": 5,
-                    "block": 0,
-                    "branch": 0,
-                    "taken": 1
-                },
-                {
-                    "line": 5,
-                    "block": 0,
-                    "branch": 1,
-                    "taken": 1
-                },
-                {
-                    "line": 8,
-                    "block": 1,
-                    "branch": 0,
-                    "taken": 0
-                },
-                {
-                    "line": 8,
-                    "block": 1,
-                    "branch": 1,
-                    "taken": 1
-                }
-            ]
+        {
+          "line": 4,
+          "hit": 2
         },
-        "title": "",
-        "file": "index.js"
-    }
+        {
+          "line": 5,
+          "hit": 2
+        },
+        {
+          "line": 6,
+          "hit": 1
+        },
+        {
+          "line": 8,
+          "hit": 1
+        },
+        {
+          "line": 9,
+          "hit": 0
+        },
+        {
+          "line": 12,
+          "hit": 1
+        },
+        {
+          "line": 15,
+          "hit": 1
+        },
+        {
+          "line": 16,
+          "hit": 1
+        }
+      ]
+    },
+    "functions": {
+      "hit": 1,
+      "found": 1,
+      "details": [
+        {
+          "name": "oddOrEven",
+          "line": 3,
+          "hit": 2
+        }
+      ]
+    },
+    "branches": {
+      "hit": 3,
+      "found": 4,
+      "details": [
+        {
+          "line": 5,
+          "block": 0,
+          "branch": 0,
+          "taken": 1
+        },
+        {
+          "line": 5,
+          "block": 0,
+          "branch": 1,
+          "taken": 1
+        },
+        {
+          "line": 8,
+          "block": 1,
+          "branch": 0,
+          "taken": 0
+        },
+        {
+          "line": 8,
+          "block": 1,
+          "branch": 1,
+          "taken": 1
+        }
+      ]
+    },
+    "title": "",
+    "file": "index.js"
+  }
 ]
