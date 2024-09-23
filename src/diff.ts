@@ -71,25 +71,29 @@ export const analyzeDiffCoverage = async ({
       file: lcovFile.file,
       hunks: []
     }
-    let isPreviousCovered = false
+    let coveredOrSkipped = false
     for (const detail of lcovFile.lines.details) {
       const inChanges = changes.find(change => change.ln === detail.line)
 
       if (inChanges) {
         if (detail.hit > 0) {
-          isPreviousCovered = true
+          coveredOrSkipped = true
           linesHit++
-        } else if (isPreviousCovered) {
-          isPreviousCovered = false
+        } else if (coveredOrSkipped) {
+          coveredOrSkipped = false
           set.hunks.push({
             start: inChanges.ln
           })
-        } else if (!isPreviousCovered) {
-          isPreviousCovered = false
+        } else if (!coveredOrSkipped) {
+          coveredOrSkipped = false
           const last = set.hunks.length - 1
-          set.hunks[last].end = inChanges.ln
+          if (last >= 0) {
+            set.hunks[last].end = inChanges.ln
+          }
         }
         linesFound++
+      } else {
+        coveredOrSkipped = true
       }
     }
 
