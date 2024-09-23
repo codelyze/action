@@ -4,7 +4,7 @@ import type { LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
 import { createCommitStatus, percentString } from './util'
 import { ContextInfo } from './types'
-import { DiffCoverageOutput } from './diff'
+import { ChangeHunkSet, DiffCoverageOutput } from './diff'
 
 interface Props {
   token: string
@@ -92,5 +92,19 @@ export const coverage = async ({
         : 'No diff detected'
   })
 
+  addAnnotations(diffCoverage.uncoveredHunks)
+
   return { status, rate, diff, diffCoverageStatus }
+}
+
+export const addAnnotations = async (hunkSet: ChangeHunkSet[]) => {
+  for (const file of hunkSet) {
+    for (const hunk of file.hunks) {
+      core.warning('This hunk is not covered', {
+        file: file.file,
+        startLine: hunk.start,
+        endLine: hunk.end
+      })
+    }
+  }
 }

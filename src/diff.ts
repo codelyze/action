@@ -11,6 +11,15 @@ interface Props {
 export interface DiffCoverageOutput {
   linesHit: number
   linesFound: number
+  uncoveredHunks: ChangeHunkSet[]
+}
+
+export interface ChangeHunkSet {
+  file: string
+  hunks: {
+    start?: number
+    end?: number
+  }[]
 }
 
 export const analyzeDiffCoverage = async ({
@@ -50,23 +59,44 @@ export const analyzeDiffCoverage = async ({
   let linesHit = 0
   let linesFound = 0
 
+  const uncoveredHunks: ChangeHunkSet[] = []
+
   for (const lcovFile of lcovFiles) {
     const changes = fileChanges.get(lcovFile.file)
     if (!changes) {
       continue
     }
 
+    const set: ChangeHunkSet = {
+      file: lcovFile.file,
+      hunks: []
+    }
+    let isPreviousCovered = false
     for (const detail of lcovFile.lines.details) {
       const inChanges = changes.find(change => change.ln === detail.line)
 
       if (inChanges) {
         if (detail.hit > 0) {
+          isPreviousCovered = true
           linesHit++
+        } else if (isPreviousCovered) {
+          isPreviousCovered = false
+          set.hunks.push({
+            start: inChanges.ln
+          })
+        } else if (!isPreviousCovered) {
+          isPreviousCovered = false
+          const last = set.hunks.length - 1
+          set.hunks[last].end = inChanges.ln
         }
         linesFound++
       }
     }
+
+    if (set.hunks.length > 0) {
+      uncoveredHunks.push(set)
+    }
   }
 
-  return { linesFound, linesHit }
+  return { linesFound, linesHit, uncoveredHunks }
 }

@@ -36,7 +36,8 @@ describe('action', () => {
       .mockImplementation(async () =>
         Promise.resolve({
           linesHit: 12,
-          linesFound: 13
+          linesFound: 13,
+          uncoveredHunks: []
         })
       )
     jest.spyOn(github, 'getOctokit').mockImplementation()
