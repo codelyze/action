@@ -29378,7 +29378,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.coverage = void 0;
+exports.addAnnotations = exports.coverage = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const codelyze = __importStar(__nccwpck_require__(9001));
@@ -29444,9 +29444,22 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage }) => {
             ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
             : 'No diff detected'
     });
+    (0, exports.addAnnotations)(diffCoverage.uncoveredHunks);
     return { status, rate, diff, diffCoverageStatus };
 };
 exports.coverage = coverage;
+const addAnnotations = async (hunkSet) => {
+    for (const file of hunkSet) {
+        for (const hunk of file.hunks) {
+            core.warning('This hunk is not covered', {
+                file: file.file,
+                startLine: hunk.start,
+                endLine: hunk.end
+            });
+        }
+    }
+};
+exports.addAnnotations = addAnnotations;
 
 
 /***/ }),
@@ -29487,22 +29500,48 @@ const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
     }
     let linesHit = 0;
     let linesFound = 0;
+    const uncoveredHunks = [];
     for (const lcovFile of lcovFiles) {
         const changes = fileChanges.get(lcovFile.file);
         if (!changes) {
             continue;
         }
+        const set = {
+            file: lcovFile.file,
+            hunks: []
+        };
+        let coveredOrSkipped = false;
         for (const detail of lcovFile.lines.details) {
             const inChanges = changes.find(change => change.ln === detail.line);
             if (inChanges) {
                 if (detail.hit > 0) {
+                    coveredOrSkipped = true;
                     linesHit++;
+                }
+                else if (coveredOrSkipped) {
+                    coveredOrSkipped = false;
+                    set.hunks.push({
+                        start: inChanges.ln
+                    });
+                }
+                else if (!coveredOrSkipped) {
+                    coveredOrSkipped = false;
+                    const last = set.hunks.length - 1;
+                    if (last >= 0) {
+                        set.hunks[last].end = inChanges.ln;
+                    }
                 }
                 linesFound++;
             }
+            else {
+                coveredOrSkipped = true;
+            }
+        }
+        if (set.hunks.length > 0) {
+            uncoveredHunks.push(set);
         }
     }
-    return { linesFound, linesHit };
+    return { linesFound, linesHit, uncoveredHunks };
 };
 exports.analyzeDiffCoverage = analyzeDiffCoverage;
 
