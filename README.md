@@ -40,13 +40,13 @@ permissions:
 | `threshold`            | The minimum coverage allowed. If coverage is lower than this, the action will fail                                                                                                                                       | no       |
 | `difference-threshold` | The minimum total difference allowed between the current commit and the reference one                                                                                                                                    | no       |
 | `patch-threshold`      | the minimum value for patch coverage: the minimum ratio of new lines that are not covered.                                                                                                                               | no       |
-| `empty-patch`          | If true don't even add a commit status for a patch that has no changes.                                                                                                                                                | no       |
+| `empty-patch`          | If true don't even add a commit status for a patch that has no changes.                                                                                                                                                  | no       |
 
 ### Outputs
 
 `codelyze/action` has the following outputs:
 
-| Name         | Description               |
-| ------------ | ------------------------- |
-| `percentage` | Total percentage coverage |
-| `diffCoverage` | 
+| Name           | Description               |
+| -------------- | ------------------------- |
+| `percentage`   | Total percentage coverage |
+| `diffCoverage` |

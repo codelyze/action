@@ -50,3 +50,4 @@ jobs:
           token: ${{ secrets.CODELYZE_TOKEN }}
           path: coverage/lcov.info
           annotations: true
+          threshold: 50
