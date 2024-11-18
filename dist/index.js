@@ -30089,7 +30089,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const codelyze = __importStar(__nccwpck_require__(7816));
 const util_1 = __nccwpck_require__(4527);
-const coverage = async ({ token, ghToken, summary, context, diffCoverage }) => {
+const coverage = async ({ token, ghToken, summary, context, diffCoverage, shouldAddAnnotation, threshold = 0, differenceThreshold = 0 }) => {
     const octokit = github.getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = context;
     const { data: commit } = await octokit.rest.repos.getCommit({
@@ -30130,7 +30130,7 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage }) => {
             };
         }
         return {
-            state: diff < -0.0001 ? 'failure' : 'success',
+            state: diff < threshold ? 'failure' : 'success',
             description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
         };
     })();
@@ -30141,16 +30141,19 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage }) => {
         ...message
     });
     const { linesHit, linesFound } = diffCoverage;
+    const diffCoverageRate = linesHit / linesFound;
     const { data: diffCoverageStatus } = await (0, util_1.createCommitStatus)({
         token: utoken ? utoken : ghToken,
         context,
         commitContext: 'codelyze/patch',
-        state: 'success',
+        state: diffCoverageRate < differenceThreshold ? 'failure' : 'success',
         description: linesFound > 0
             ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
             : 'No diff detected'
     });
-    (0, exports.addAnnotations)(diffCoverage.uncoveredHunks);
+    if (shouldAddAnnotation) {
+        (0, exports.addAnnotations)(diffCoverage.uncoveredHunks);
+    }
     return { status, rate, diff, diffCoverageStatus };
 };
 exports.coverage = coverage;
@@ -30346,9 +30349,17 @@ const diff_1 = __nccwpck_require__(9952);
  */
 async function run() {
     try {
-        const path = core.getInput('path');
-        const token = core.getInput('token');
+        const path = core.getInput('path', { required: true });
+        const token = core.getInput('token', {
+            required: true,
+            trimWhitespace: true
+        });
         const ghToken = core.getInput('gh-token');
+        const shouldAddAnnotation = core.getBooleanInput('annotations') ?? false;
+        const threshold = Number.parseFloat(core.getInput('threshold'));
+        const differenceThreshold = Number.parseFloat(core.getInput('difference-threshold'));
+        // const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
+        // const emptyPatch = core.getBooleanInput('empty-patch') ?? false
         const { summary, data: lcovFiles } = await (0, lcov_1.analyze)(path);
         const octokit = github.getOctokit(ghToken);
         const context = (0, util_1.getContextInfo)();
@@ -30362,7 +30373,10 @@ async function run() {
             ghToken,
             summary,
             context,
-            diffCoverage
+            diffCoverage,
+            shouldAddAnnotation,
+            threshold,
+            differenceThreshold
         });
         core.setOutput('percentage', rate);
         core.setOutput('diffCoverage', diffCoverage.linesHit / diffCoverage.linesFound);

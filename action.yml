@@ -21,10 +21,27 @@ inputs:
     description: 'Show uncovered lines annotations'
     default: false
     required: false
+  threshold:
+    description: 'The minimum coverage allowed. If coverage is lower than this, the action will fail'
+    required: false
+  difference-threshold: 
+    description: 'The minimum total difference allowed between the current commit and the reference one'
+  patch-threshold: 
+    description: 'the minimum value for patch coverage: the minimum ratio of new lines that are not covered.'
+  empty-patch: 
+    description: 'if false don''t even add a commit status for a patch that has no changes.'
+
 
 outputs:
   percentage:
     description: 'Total percentage coverage'
+  coverage:
+    description: ''
+  difference:
+    description: 'The difference as between current and base/reference coverage'
+
+  patch:
+    description:
 
 runs:
   using: node20

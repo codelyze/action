@@ -12,6 +12,9 @@ interface Props {
   summary: LcovSummary
   context: ContextInfo
   diffCoverage: DiffCoverageOutput
+  shouldAddAnnotation: boolean
+  threshold: number
+  differenceThreshold: number
 }
 
 export const coverage = async ({
@@ -19,7 +22,10 @@ export const coverage = async ({
   ghToken,
   summary,
   context,
-  diffCoverage
+  diffCoverage,
+  shouldAddAnnotation,
+  threshold = 0,
+  differenceThreshold = 0
 }: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = context
@@ -68,7 +74,7 @@ export const coverage = async ({
       }
     }
     return {
-      state: diff < -0.0001 ? 'failure' : 'success',
+      state: diff < threshold ? 'failure' : 'success',
       description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
     }
   })()
@@ -81,18 +87,21 @@ export const coverage = async ({
   })
 
   const { linesHit, linesFound } = diffCoverage
+  const diffCoverageRate = linesHit / linesFound
   const { data: diffCoverageStatus } = await createCommitStatus({
     token: utoken ? utoken : ghToken,
     context,
     commitContext: 'codelyze/patch',
-    state: 'success',
+    state: diffCoverageRate < differenceThreshold ? 'failure' : 'success',
     description:
       linesFound > 0
         ? `${percentString(linesHit / linesFound)} of diff hit`
         : 'No diff detected'
   })
 
-  addAnnotations(diffCoverage.uncoveredHunks)
+  if (shouldAddAnnotation) {
+    addAnnotations(diffCoverage.uncoveredHunks)
+  }
 
   return { status, rate, diff, diffCoverageStatus }
 }

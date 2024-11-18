@@ -11,9 +11,19 @@ import { analyzeDiffCoverage } from './diff'
  */
 export async function run(): Promise<void> {
   try {
-    const path = core.getInput('path')
-    const token = core.getInput('token')
+    const path = core.getInput('path', { required: true })
+    const token = core.getInput('token', {
+      required: true,
+      trimWhitespace: true
+    })
     const ghToken = core.getInput('gh-token')
+    const shouldAddAnnotation = core.getBooleanInput('annotations') ?? false
+    const threshold = Number.parseFloat(core.getInput('threshold'))
+    const differenceThreshold = Number.parseFloat(
+      core.getInput('difference-threshold')
+    )
+    // const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
+    // const emptyPatch = core.getBooleanInput('empty-patch') ?? false
 
     const { summary, data: lcovFiles } = await analyze(path)
     const octokit = github.getOctokit(ghToken)
@@ -30,7 +40,10 @@ export async function run(): Promise<void> {
       ghToken,
       summary,
       context,
-      diffCoverage
+      diffCoverage,
+      shouldAddAnnotation,
+      threshold,
+      differenceThreshold
     })
 
     core.setOutput('percentage', rate)

@@ -10,6 +10,7 @@ const runMock = jest.spyOn(main, 'run')
 
 let errorMock: jest.SpyInstance
 let getInputMock: jest.SpyInstance
+let getBooleanInputMock: jest.SpyInstance
 let setFailedMock: jest.SpyInstance
 let setOutputMock: jest.SpyInstance
 let coverageMock: jest.SpyInstance
@@ -21,6 +22,9 @@ describe('action', () => {
 
     errorMock = jest.spyOn(core, 'error').mockImplementation()
     getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
+    getBooleanInputMock = jest
+      .spyOn(core, 'getBooleanInput')
+      .mockImplementation()
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
     coverageMock = jest.spyOn(cov, 'coverage').mockImplementation(async () => {
@@ -72,9 +76,11 @@ describe('action', () => {
 
   it('sets a failed status', async () => {
     getInputMock.mockImplementation(() => '')
+    getBooleanInputMock.mockImplementation(() => '')
 
     await main.run()
     expect(runMock).toHaveReturned()
+    // expect(analyzeDiffCov).toHaveBeenCalled()
     expect(coverageMock).not.toHaveBeenCalled()
 
     expect(setFailedMock).toHaveBeenNthCalledWith(
