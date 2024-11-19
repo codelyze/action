@@ -73,6 +73,7 @@ export const coverage = async ({
         description: `${percentString(rate)} coverage`
       }
     }
+    console.log(`diff: ${diff} | threshold: ${threshold}`)
     return {
       state: diff < threshold ? 'failure' : 'success',
       description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
@@ -88,6 +89,9 @@ export const coverage = async ({
 
   const { linesHit, linesFound } = diffCoverage
   const diffCoverageRate = linesHit / linesFound
+  console.log(
+    `diffCoverage: ${diffCoverageRate} | differenceThreshold: ${differenceThreshold}`
+  )
   const { data: diffCoverageStatus } = await createCommitStatus({
     token: utoken ? utoken : ghToken,
     context,
