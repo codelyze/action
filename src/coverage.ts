@@ -15,6 +15,8 @@ interface Props {
   shouldAddAnnotation: boolean
   threshold: number
   differenceThreshold: number
+  patchThreshold: number
+  emptyPatch: boolean
 }
 
 export const coverage = async ({
@@ -23,9 +25,11 @@ export const coverage = async ({
   summary,
   context,
   diffCoverage,
-  shouldAddAnnotation,
+  shouldAddAnnotation = true,
   threshold = 0,
-  differenceThreshold = 0
+  differenceThreshold = 0,
+  patchThreshold = 0,
+  emptyPatch = false
 }: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = context
@@ -73,9 +77,11 @@ export const coverage = async ({
         description: `${percentString(rate)} coverage`
       }
     }
-    console.log(`diff: ${diff} | threshold: ${threshold}`)
     return {
-      state: diff < threshold ? 'failure' : 'success',
+      state: evaluateState([
+        rate * 100 >= threshold,
+        diff * 100 >= differenceThreshold
+      ]),
       description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
     }
   })()
@@ -92,22 +98,30 @@ export const coverage = async ({
   console.log(
     `diffCoverage: ${diffCoverageRate} | differenceThreshold: ${differenceThreshold}`
   )
-  const { data: diffCoverageStatus } = await createCommitStatus({
-    token: utoken ? utoken : ghToken,
-    context,
-    commitContext: 'codelyze/patch',
-    state: diffCoverageRate < differenceThreshold ? 'failure' : 'success',
-    description:
-      linesFound > 0
-        ? `${percentString(linesHit / linesFound)} of diff hit`
-        : 'No diff detected'
-  })
+  let diffCoverageStatus
+  if (!(emptyPatch && linesFound === 0)) {
+    const { data } = await createCommitStatus({
+      token: utoken ? utoken : ghToken,
+      context,
+      commitContext: 'codelyze/patch',
+      state: evaluateState([diffCoverageRate * 100 >= patchThreshold]),
+      description:
+        linesFound > 0
+          ? `${percentString(linesHit / linesFound)} of diff hit`
+          : 'No diff detected'
+    })
+    diffCoverageStatus = data
+  }
 
   if (shouldAddAnnotation) {
     addAnnotations(diffCoverage.uncoveredHunks)
   }
 
   return { status, rate, diff, diffCoverageStatus }
+}
+
+export const evaluateState = (conditions: boolean[]) => {
+  return conditions.every(Boolean) ? 'success' : 'failure'
 }
 
 export const addAnnotations = async (hunkSet: ChangeHunkSet[]) => {

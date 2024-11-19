@@ -22,8 +22,8 @@ export async function run(): Promise<void> {
     const differenceThreshold = Number.parseFloat(
       core.getInput('difference-threshold')
     )
-    // const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
-    // const emptyPatch = core.getBooleanInput('empty-patch') ?? false
+    const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
+    const emptyPatch = core.getBooleanInput('empty-patch') ?? false
 
     const { summary, data: lcovFiles } = await analyze(path)
     const octokit = github.getOctokit(ghToken)
@@ -43,7 +43,9 @@ export async function run(): Promise<void> {
       diffCoverage,
       shouldAddAnnotation,
       threshold,
-      differenceThreshold
+      differenceThreshold,
+      patchThreshold,
+      emptyPatch
     })
 
     core.setOutput('percentage', rate)

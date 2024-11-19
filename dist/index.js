@@ -30084,12 +30084,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addAnnotations = exports.coverage = void 0;
+exports.addAnnotations = exports.evaluateState = exports.coverage = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const codelyze = __importStar(__nccwpck_require__(7816));
 const util_1 = __nccwpck_require__(4527);
-const coverage = async ({ token, ghToken, summary, context, diffCoverage, shouldAddAnnotation, threshold = 0, differenceThreshold = 0 }) => {
+const coverage = async ({ token, ghToken, summary, context, diffCoverage, shouldAddAnnotation = true, threshold = 0, differenceThreshold = 0, patchThreshold = 0, emptyPatch = false }) => {
     const octokit = github.getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = context;
     const { data: commit } = await octokit.rest.repos.getCommit({
@@ -30129,9 +30129,11 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
                 description: `${(0, util_1.percentString)(rate)} coverage`
             };
         }
-        console.log(`diff: ${diff} | threshold: ${threshold}`);
         return {
-            state: diff < threshold ? 'failure' : 'success',
+            state: (0, exports.evaluateState)([
+                rate * 100 >= threshold,
+                diff * 100 >= differenceThreshold
+            ]),
             description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
         };
     })();
@@ -30144,21 +30146,29 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
     const { linesHit, linesFound } = diffCoverage;
     const diffCoverageRate = linesHit / linesFound;
     console.log(`diffCoverage: ${diffCoverageRate} | differenceThreshold: ${differenceThreshold}`);
-    const { data: diffCoverageStatus } = await (0, util_1.createCommitStatus)({
-        token: utoken ? utoken : ghToken,
-        context,
-        commitContext: 'codelyze/patch',
-        state: diffCoverageRate < differenceThreshold ? 'failure' : 'success',
-        description: linesFound > 0
-            ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
-            : 'No diff detected'
-    });
+    let diffCoverageStatus;
+    if (!(emptyPatch && linesFound === 0)) {
+        const { data } = await (0, util_1.createCommitStatus)({
+            token: utoken ? utoken : ghToken,
+            context,
+            commitContext: 'codelyze/patch',
+            state: (0, exports.evaluateState)([diffCoverageRate * 100 >= patchThreshold]),
+            description: linesFound > 0
+                ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
+                : 'No diff detected'
+        });
+        diffCoverageStatus = data;
+    }
     if (shouldAddAnnotation) {
         (0, exports.addAnnotations)(diffCoverage.uncoveredHunks);
     }
     return { status, rate, diff, diffCoverageStatus };
 };
 exports.coverage = coverage;
+const evaluateState = (conditions) => {
+    return conditions.every(Boolean) ? 'success' : 'failure';
+};
+exports.evaluateState = evaluateState;
 const addAnnotations = async (hunkSet) => {
     for (const file of hunkSet) {
         for (const hunk of file.hunks) {
@@ -30360,8 +30370,8 @@ async function run() {
         const shouldAddAnnotation = core.getBooleanInput('annotations') ?? false;
         const threshold = Number.parseFloat(core.getInput('threshold'));
         const differenceThreshold = Number.parseFloat(core.getInput('difference-threshold'));
-        // const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
-        // const emptyPatch = core.getBooleanInput('empty-patch') ?? false
+        const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'));
+        const emptyPatch = core.getBooleanInput('empty-patch') ?? false;
         const { summary, data: lcovFiles } = await (0, lcov_1.analyze)(path);
         const octokit = github.getOctokit(ghToken);
         const context = (0, util_1.getContextInfo)();
@@ -30378,7 +30388,9 @@ async function run() {
             diffCoverage,
             shouldAddAnnotation,
             threshold,
-            differenceThreshold
+            differenceThreshold,
+            patchThreshold,
+            emptyPatch
         });
         core.setOutput('percentage', rate);
         core.setOutput('diffCoverage', diffCoverage.linesHit / diffCoverage.linesFound);
