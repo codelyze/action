@@ -30129,12 +30129,16 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
                 description: `${(0, util_1.percentString)(rate)} coverage`
             };
         }
+        const state = (0, exports.evaluateState)([
+            rate * 100 >= threshold,
+            Math.abs(diff * 100) >= differenceThreshold // absolute value because it is diff
+        ]);
+        const failDescription = state === 'success'
+            ? ''
+            : `Failed to satisfy threshold:${threshold}% and difference-threshold:${differenceThreshold}%`;
         return {
-            state: (0, exports.evaluateState)([
-                rate * 100 >= threshold,
-                diff * 100 >= differenceThreshold
-            ]),
-            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}`
+            state,
+            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}.${failDescription}`
         };
     })();
     const { data: status } = await (0, util_1.createCommitStatus)({

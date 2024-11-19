@@ -77,12 +77,17 @@ export const coverage = async ({
         description: `${percentString(rate)} coverage`
       }
     }
+    const state = evaluateState([
+      rate * 100 >= threshold,
+      Math.abs(diff * 100) >= differenceThreshold // absolute value because it is diff
+    ])
+    const failDescription =
+      state === 'success'
+        ? ''
+        : `Failed to satisfy threshold:${threshold}% and difference-threshold:${differenceThreshold}%`
     return {
-      state: evaluateState([
-        rate * 100 >= threshold,
-        diff * 100 >= differenceThreshold
-      ]),
-      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
+      state,
+      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}.${failDescription}`
     }
   })()
 
