@@ -30084,7 +30084,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addAnnotations = exports.evaluateState = exports.coverage = void 0;
+exports.addAnnotations = exports.coverage = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const codelyze = __importStar(__nccwpck_require__(7816));
@@ -30129,16 +30129,16 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
                 description: `${(0, util_1.percentString)(rate)} coverage`
             };
         }
-        const state = (0, exports.evaluateState)([
+        const success = evaluateState([
             rate * 100 >= threshold,
             Math.abs(diff * 100) >= differenceThreshold // absolute value because it is diff
         ]);
-        const failDescription = state === 'success'
+        const failDescription = success
             ? ''
-            : `Failed to satisfy threshold:${threshold}% and difference-threshold:${differenceThreshold}%`;
+            : `Failed to satisfy threshold: ${threshold}% and difference-threshold: ${differenceThreshold}%`;
         return {
-            state,
-            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}.${failDescription}`
+            state: toState(success),
+            description: `${(0, util_1.percentString)(rate)} (${(0, util_1.percentString)(diff)}) compared to ${compareSha.slice(0, 8)}. ${failDescription}`
         };
     })();
     const { data: status } = await (0, util_1.createCommitStatus)({
@@ -30156,7 +30156,7 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
             token: utoken ? utoken : ghToken,
             context,
             commitContext: 'codelyze/patch',
-            state: (0, exports.evaluateState)([diffCoverageRate * 100 >= patchThreshold]),
+            state: toState(evaluateState([diffCoverageRate * 100 >= patchThreshold])),
             description: linesFound > 0
                 ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
                 : 'No diff detected'
@@ -30169,10 +30169,8 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
     return { status, rate, diff, diffCoverageStatus };
 };
 exports.coverage = coverage;
-const evaluateState = (conditions) => {
-    return conditions.every(Boolean) ? 'success' : 'failure';
-};
-exports.evaluateState = evaluateState;
+const evaluateState = (conditions) => conditions.every(Boolean);
+const toState = (success) => (success ? 'success' : 'failure');
 const addAnnotations = async (hunkSet) => {
     for (const file of hunkSet) {
         for (const hunk of file.hunks) {

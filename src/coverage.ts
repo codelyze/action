@@ -77,17 +77,16 @@ export const coverage = async ({
         description: `${percentString(rate)} coverage`
       }
     }
-    const state = evaluateState([
+    const success = evaluateState([
       rate * 100 >= threshold,
       Math.abs(diff * 100) >= differenceThreshold // absolute value because it is diff
     ])
-    const failDescription =
-      state === 'success'
-        ? ''
-        : `Failed to satisfy threshold:${threshold}% and difference-threshold:${differenceThreshold}%`
+    const failDescription = success
+      ? ''
+      : `Failed to satisfy threshold: ${threshold}% and difference-threshold: ${differenceThreshold}%`
     return {
-      state,
-      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}.${failDescription}`
+      state: toState(success),
+      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}. ${failDescription}`
     }
   })()
 
@@ -109,7 +108,7 @@ export const coverage = async ({
       token: utoken ? utoken : ghToken,
       context,
       commitContext: 'codelyze/patch',
-      state: evaluateState([diffCoverageRate * 100 >= patchThreshold]),
+      state: toState(evaluateState([diffCoverageRate * 100 >= patchThreshold])),
       description:
         linesFound > 0
           ? `${percentString(linesHit / linesFound)} of diff hit`
@@ -125,9 +124,8 @@ export const coverage = async ({
   return { status, rate, diff, diffCoverageStatus }
 }
 
-export const evaluateState = (conditions: boolean[]) => {
-  return conditions.every(Boolean) ? 'success' : 'failure'
-}
+const evaluateState = (conditions: boolean[]) => conditions.every(Boolean)
+const toState = (success: boolean) => (success ? 'success' : 'failure')
 
 export const addAnnotations = async (hunkSet: ChangeHunkSet[]) => {
   for (const file of hunkSet) {
