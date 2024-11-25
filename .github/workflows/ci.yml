@@ -53,4 +53,4 @@ jobs:
           threshold: 50
           difference-threshold: 10
           patch-threshold: 10
-          empty-patch: true
+          skip-empty-patch: true

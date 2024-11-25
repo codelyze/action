@@ -19,7 +19,7 @@ inputs:
     required: true
   annotations:
     description: 'Show uncovered lines annotations'
-    default: false
+    default: true
     required: false
   threshold:
     description: 'The minimum coverage allowed. If coverage is lower than this, the action will fail'
@@ -28,7 +28,7 @@ inputs:
     description: 'The minimum total difference allowed between the current commit and the reference one'
   patch-threshold: 
     description: 'the minimum value for patch coverage: the minimum ratio of new lines that are not covered.'
-  empty-patch: 
+  skip-empty-patch: 
     description: 'if false don''t even add a commit status for a patch that has no changes.'
 
 

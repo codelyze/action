@@ -23,7 +23,7 @@ export async function run(): Promise<void> {
       core.getInput('difference-threshold')
     )
     const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
-    const emptyPatch = core.getBooleanInput('empty-patch') ?? false
+    const emptyPatch = core.getBooleanInput('skip-empty-patch') ?? false
 
     const { summary, data: lcovFiles } = await analyze(path)
     const octokit = github.getOctokit(ghToken)

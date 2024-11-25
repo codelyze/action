@@ -30373,7 +30373,7 @@ async function run() {
         const threshold = Number.parseFloat(core.getInput('threshold'));
         const differenceThreshold = Number.parseFloat(core.getInput('difference-threshold'));
         const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'));
-        const emptyPatch = core.getBooleanInput('empty-patch') ?? false;
+        const emptyPatch = core.getBooleanInput('skip-empty-patch') ?? false;
         const { summary, data: lcovFiles } = await (0, lcov_1.analyze)(path);
         const octokit = github.getOctokit(ghToken);
         const context = (0, util_1.getContextInfo)();
