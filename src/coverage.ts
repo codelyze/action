@@ -99,9 +99,7 @@ export const coverage = async ({
 
   const { linesHit, linesFound } = diffCoverage
   const diffCoverageRate = linesHit / linesFound
-  console.log(
-    `diffCoverage: ${diffCoverageRate} | differenceThreshold: ${differenceThreshold}`
-  )
+
   let diffCoverageStatus
   if (!(emptyPatch && linesFound === 0)) {
     const { data } = await createCommitStatus({
@@ -121,7 +119,14 @@ export const coverage = async ({
     addAnnotations(diffCoverage.uncoveredHunks)
   }
 
-  return { status, rate, diff, diffCoverageStatus }
+  return {
+    status,
+    rate,
+    diff,
+    diffCoverageStatus,
+    linesFound,
+    linesCovered: linesHit
+  }
 }
 
 const evaluateState = (conditions: boolean[]) => conditions.every(Boolean)

@@ -47,7 +47,8 @@ permissions:
 
 `codelyze/action` has the following outputs:
 
-| Name           | Description               |
-| -------------- | ------------------------- |
-| `percentage`   | Total percentage coverage |
-| `diffCoverage` |
+| Name         | Description                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| `coverage`   | Object that contains `linesFound`, `linesCovered` and `rate` of the commit's coverage         |
+| `difference` | The coverage rate's difference between the commit and HEAD                                    |
+| `patch`      | Object that contains `linesFound`, `linesCovered`, and `rate` of the commit's patch coverage  |

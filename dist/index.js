@@ -30149,7 +30149,6 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
     });
     const { linesHit, linesFound } = diffCoverage;
     const diffCoverageRate = linesHit / linesFound;
-    console.log(`diffCoverage: ${diffCoverageRate} | differenceThreshold: ${differenceThreshold}`);
     let diffCoverageStatus;
     if (!(emptyPatch && linesFound === 0)) {
         const { data } = await (0, util_1.createCommitStatus)({
@@ -30166,7 +30165,14 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
     if (shouldAddAnnotation) {
         (0, exports.addAnnotations)(diffCoverage.uncoveredHunks);
     }
-    return { status, rate, diff, diffCoverageStatus };
+    return {
+        status,
+        rate,
+        diff,
+        diffCoverageStatus,
+        linesFound,
+        linesCovered: linesHit
+    };
 };
 exports.coverage = coverage;
 const evaluateState = (conditions) => conditions.every(Boolean);
@@ -30382,7 +30388,7 @@ async function run() {
             context,
             octokit
         });
-        const { rate } = await (0, coverage_1.coverage)({
+        const { rate, linesFound, linesCovered, diff } = await (0, coverage_1.coverage)({
             token,
             ghToken,
             summary,
@@ -30394,8 +30400,13 @@ async function run() {
             patchThreshold,
             emptyPatch
         });
-        core.setOutput('percentage', rate);
-        core.setOutput('diffCoverage', diffCoverage.linesHit / diffCoverage.linesFound);
+        core.setOutput('coverage', { linesFound, linesCovered, rate });
+        core.setOutput('difference', diff);
+        core.setOutput('patch', {
+            linesFound: diffCoverage.linesFound,
+            linesCovered: diffCoverage.linesHit,
+            rate: diffCoverage.linesHit / diffCoverage.linesFound
+        });
     }
     catch (error) {
         core.debug(`${error}`);

@@ -35,7 +35,7 @@ export async function run(): Promise<void> {
       octokit
     })
 
-    const { rate } = await coverage({
+    const { rate, linesFound, linesCovered, diff } = await coverage({
       token,
       ghToken,
       summary,
@@ -48,11 +48,13 @@ export async function run(): Promise<void> {
       emptyPatch
     })
 
-    core.setOutput('percentage', rate)
-    core.setOutput(
-      'diffCoverage',
-      diffCoverage.linesHit / diffCoverage.linesFound
-    )
+    core.setOutput('coverage', { linesFound, linesCovered, rate })
+    core.setOutput('difference', diff)
+    core.setOutput('patch', {
+      linesFound: diffCoverage.linesFound,
+      linesCovered: diffCoverage.linesHit,
+      rate: diffCoverage.linesHit / diffCoverage.linesFound
+    })
   } catch (error) {
     core.debug(`${error}`)
     if (isErrorLike(error)) core.setFailed(error.message)

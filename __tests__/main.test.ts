@@ -32,7 +32,9 @@ describe('action', () => {
         rate: 0.9,
         diff: 0.9,
         status: {} as CommitStatusResponse,
-        diffCoverageStatus: {} as CommitStatusResponse
+        diffCoverageStatus: {} as CommitStatusResponse,
+        linesFound: 10,
+        linesCovered: 9
       }
     })
     analyzeDiffCov = jest
@@ -70,7 +72,17 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
     expect(analyzeDiffCov).toHaveBeenCalled()
     expect(coverageMock).toHaveBeenCalled()
-    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'percentage', 0.9)
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'coverage', {
+      linesCovered: 9,
+      linesFound: 10,
+      rate: 0.9
+    })
+    expect(setOutputMock).toHaveBeenNthCalledWith(2, 'difference', 0.9)
+    expect(setOutputMock).toHaveBeenNthCalledWith(3, 'patch', {
+      linesCovered: 12,
+      linesFound: 13,
+      rate: 0.9230769230769231
+    })
     expect(errorMock).not.toHaveBeenCalled()
   })
 
