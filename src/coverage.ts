@@ -12,6 +12,11 @@ interface Props {
   summary: LcovSummary
   context: ContextInfo
   diffCoverage: DiffCoverageOutput
+  shouldAddAnnotation: boolean
+  threshold: number
+  differenceThreshold: number
+  patchThreshold: number
+  emptyPatch: boolean
 }
 
 export const coverage = async ({
@@ -19,7 +24,12 @@ export const coverage = async ({
   ghToken,
   summary,
   context,
-  diffCoverage
+  diffCoverage,
+  shouldAddAnnotation = true,
+  threshold = 0,
+  differenceThreshold = 0,
+  patchThreshold = 0,
+  emptyPatch = false
 }: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = context
@@ -67,9 +77,16 @@ export const coverage = async ({
         description: `${percentString(rate)} coverage`
       }
     }
+    const success = evaluateState([
+      rate * 100 >= threshold,
+      Math.abs(diff * 100) >= differenceThreshold // absolute value because it is diff
+    ])
+    const failDescription = success
+      ? ''
+      : `Failed to satisfy threshold: ${threshold}% and difference-threshold: ${differenceThreshold}%`
     return {
-      state: diff < -0.0001 ? 'failure' : 'success',
-      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}`
+      state: toState(success),
+      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}. ${failDescription}`
     }
   })()
 
@@ -81,21 +98,39 @@ export const coverage = async ({
   })
 
   const { linesHit, linesFound } = diffCoverage
-  const { data: diffCoverageStatus } = await createCommitStatus({
-    token: utoken ? utoken : ghToken,
-    context,
-    commitContext: 'codelyze/patch',
-    state: 'success',
-    description:
-      linesFound > 0
-        ? `${percentString(linesHit / linesFound)} of diff hit`
-        : 'No diff detected'
-  })
+  const diffCoverageRate = linesHit / linesFound
 
-  addAnnotations(diffCoverage.uncoveredHunks)
+  let diffCoverageStatus
+  if (!(emptyPatch && linesFound === 0)) {
+    const { data } = await createCommitStatus({
+      token: utoken ? utoken : ghToken,
+      context,
+      commitContext: 'codelyze/patch',
+      state: toState(evaluateState([diffCoverageRate * 100 >= patchThreshold])),
+      description:
+        linesFound > 0
+          ? `${percentString(linesHit / linesFound)} of diff hit`
+          : 'No diff detected'
+    })
+    diffCoverageStatus = data
+  }
 
-  return { status, rate, diff, diffCoverageStatus }
+  if (shouldAddAnnotation) {
+    addAnnotations(diffCoverage.uncoveredHunks)
+  }
+
+  return {
+    status,
+    rate,
+    diff,
+    diffCoverageStatus,
+    linesFound,
+    linesCovered: linesHit
+  }
 }
+
+const evaluateState = (conditions: boolean[]) => conditions.every(Boolean)
+const toState = (success: boolean) => (success ? 'success' : 'failure')
 
 export const addAnnotations = async (hunkSet: ChangeHunkSet[]) => {
   for (const file of hunkSet) {
