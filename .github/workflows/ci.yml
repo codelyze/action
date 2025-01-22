@@ -51,6 +51,6 @@ jobs:
           path: coverage/lcov.info
           annotations: true
           threshold: 50
-          difference-threshold: 1
+          difference-threshold: 0
           patch-threshold: 10
           skip-empty-patch: true
