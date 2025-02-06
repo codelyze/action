@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import type { LcovSummary } from './lcov'
+import type { Lcov, LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
 import { createCommitStatus, percentString } from './util'
 import { ContextInfo } from './types'
@@ -10,6 +10,7 @@ interface Props {
   token: string
   ghToken: string
   summary: LcovSummary
+  data: Lcov
   context: ContextInfo
   diffCoverage: DiffCoverageOutput
   shouldAddAnnotation: boolean
@@ -23,6 +24,7 @@ export const coverage = async ({
   token,
   ghToken,
   summary,
+  data,
   context,
   diffCoverage,
   shouldAddAnnotation = true,
@@ -54,7 +56,8 @@ export const coverage = async ({
     branchesHit: summary.branches.hit,
     authorName: commit.commit.author?.name || undefined,
     authorEmail: commit.commit.author?.email || undefined,
-    commitDate: commit.commit.author?.date
+    commitDate: commit.commit.author?.date,
+    data
   })
   const comparison = res?.check
   const utoken = res?.metadata?.token
@@ -102,7 +105,7 @@ export const coverage = async ({
 
   let diffCoverageStatus
   if (!(emptyPatch && linesFound === 0)) {
-    const { data } = await createCommitStatus({
+    const { data: commitStatusData } = await createCommitStatus({
       token: utoken ? utoken : ghToken,
       context,
       commitContext: 'codelyze/patch',
@@ -112,7 +115,7 @@ export const coverage = async ({
           ? `${percentString(linesHit / linesFound)} of diff hit`
           : 'No diff detected'
     })
-    diffCoverageStatus = data
+    diffCoverageStatus = commitStatusData
   }
 
   if (shouldAddAnnotation) {

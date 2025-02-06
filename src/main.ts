@@ -25,12 +25,12 @@ export async function run(): Promise<void> {
     const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
     const emptyPatch = core.getBooleanInput('skip-empty-patch') ?? false
 
-    const { summary, data: lcovFiles } = await analyze(path)
+    const { summary, data } = await analyze(path)
     const octokit = github.getOctokit(ghToken)
     const context = getContextInfo()
 
     const diffCoverage = await analyzeDiffCoverage({
-      lcovFiles,
+      lcovFiles: data,
       context,
       octokit
     })
@@ -39,6 +39,7 @@ export async function run(): Promise<void> {
       token,
       ghToken,
       summary,
+      data,
       context,
       diffCoverage,
       shouldAddAnnotation,

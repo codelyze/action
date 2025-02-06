@@ -1,3 +1,4 @@
+import type { Lcov } from './lcov'
 interface Coverage {
   token: string
   owner: string
@@ -14,6 +15,7 @@ interface Coverage {
   authorEmail?: string
   commitDate?: string
   compareSha?: string
+  data?: Lcov
 }
 
 interface Response {

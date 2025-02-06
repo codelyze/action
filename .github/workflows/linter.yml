@@ -1,4 +1,4 @@
-name: Lint Code Base
+name: Lint Codebase
 
 on:
   pull_request:
@@ -10,11 +10,12 @@ on:
 
 permissions:
   contents: read
+  packages: read
   statuses: write
 
 jobs:
   lint:
-    name: Lint Code Base
+    name: Lint Codebase
     runs-on: ubuntu-latest
 
     steps:
@@ -35,9 +36,9 @@ jobs:
         id: install
         run: npm ci
 
-      - name: Lint Code Base
+      - name: Lint Codebase
         id: super-linter
-        uses: super-linter/super-linter/slim@v7.2.1
+        uses: super-linter/super-linter/slim@v7
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
