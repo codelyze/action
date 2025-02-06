@@ -30099,7 +30099,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const codelyze = __importStar(__nccwpck_require__(7816));
 const util_1 = __nccwpck_require__(4527);
-const coverage = async ({ token, ghToken, summary, context, diffCoverage, shouldAddAnnotation = true, threshold = 0, differenceThreshold = 0, patchThreshold = 0, emptyPatch = false }) => {
+const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, shouldAddAnnotation = true, threshold = 0, differenceThreshold = 0, patchThreshold = 0, emptyPatch = false }) => {
     const octokit = github.getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = context;
     const { data: commit } = await octokit.rest.repos.getCommit({
@@ -30122,7 +30122,8 @@ const coverage = async ({ token, ghToken, summary, context, diffCoverage, should
         branchesHit: summary.branches.hit,
         authorName: commit.commit.author?.name || undefined,
         authorEmail: commit.commit.author?.email || undefined,
-        commitDate: commit.commit.author?.date
+        commitDate: commit.commit.author?.date,
+        data
     });
     const comparison = res?.check;
     const utoken = res?.metadata?.token;
@@ -30400,11 +30401,11 @@ async function run() {
         const differenceThreshold = Number.parseFloat(core.getInput('difference-threshold'));
         const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'));
         const emptyPatch = core.getBooleanInput('skip-empty-patch') ?? false;
-        const { summary, data: lcovFiles } = await (0, lcov_1.analyze)(path);
+        const { summary, data } = await (0, lcov_1.analyze)(path);
         const octokit = github.getOctokit(ghToken);
         const context = (0, util_1.getContextInfo)();
         const diffCoverage = await (0, diff_1.analyzeDiffCoverage)({
-            lcovFiles,
+            lcovFiles: data,
             context,
             octokit
         });
@@ -30412,6 +30413,7 @@ async function run() {
             token,
             ghToken,
             summary,
+            data,
             context,
             diffCoverage,
             shouldAddAnnotation,
