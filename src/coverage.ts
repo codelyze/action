@@ -10,6 +10,7 @@ interface Props {
   token: string
   ghToken: string
   summary: LcovSummary
+  data: unknown
   context: ContextInfo
   diffCoverage: DiffCoverageOutput
   shouldAddAnnotation: boolean
@@ -23,6 +24,7 @@ export const coverage = async ({
   token,
   ghToken,
   summary,
+  data,
   context,
   diffCoverage,
   shouldAddAnnotation = true,
@@ -54,7 +56,8 @@ export const coverage = async ({
     branchesHit: summary.branches.hit,
     authorName: commit.commit.author?.name || undefined,
     authorEmail: commit.commit.author?.email || undefined,
-    commitDate: commit.commit.author?.date
+    commitDate: commit.commit.author?.date,
+    data
   })
   const comparison = res?.check
   const utoken = res?.metadata?.token

@@ -14,6 +14,7 @@ interface Coverage {
   authorEmail?: string
   commitDate?: string
   compareSha?: string
+  data?: unknown
 }
 
 interface Response {
