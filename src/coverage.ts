@@ -1,11 +1,10 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import type { LcovSummary } from './lcov'
+import type { Lcov, LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
 import { createCommitStatus, percentString } from './util'
 import { ContextInfo } from './types'
 import { ChangeHunkSet, DiffCoverageOutput } from './diff'
-import type { Lcov } from './lcov'
 
 interface Props {
   token: string
@@ -106,7 +105,7 @@ export const coverage = async ({
 
   let diffCoverageStatus
   if (!(emptyPatch && linesFound === 0)) {
-    const { data } = await createCommitStatus({
+    const { data: commitStatusData } = await createCommitStatus({
       token: utoken ? utoken : ghToken,
       context,
       commitContext: 'codelyze/patch',
@@ -116,7 +115,7 @@ export const coverage = async ({
           ? `${percentString(linesHit / linesFound)} of diff hit`
           : 'No diff detected'
     })
-    diffCoverageStatus = data
+    diffCoverageStatus = commitStatusData
   }
 
   if (shouldAddAnnotation) {

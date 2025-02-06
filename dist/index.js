@@ -30162,7 +30162,7 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
     const diffCoverageRate = linesHit / linesFound;
     let diffCoverageStatus;
     if (!(emptyPatch && linesFound === 0)) {
-        const { data } = await (0, util_1.createCommitStatus)({
+        const { data: commitStatusData } = await (0, util_1.createCommitStatus)({
             token: utoken ? utoken : ghToken,
             context,
             commitContext: 'codelyze/patch',
@@ -30171,7 +30171,7 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
                 ? `${(0, util_1.percentString)(linesHit / linesFound)} of diff hit`
                 : 'No diff detected'
         });
-        diffCoverageStatus = data;
+        diffCoverageStatus = commitStatusData;
     }
     if (shouldAddAnnotation) {
         (0, exports.addAnnotations)(diffCoverage.uncoveredHunks);
