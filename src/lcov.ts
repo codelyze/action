@@ -1,6 +1,7 @@
 import lcov, { LcovFile } from 'lcov-parse'
 import { readFile } from 'fs/promises'
 
+export type Lcov = LcovFile[]
 export type LcovSummary = Record<
   'lines' | 'functions' | 'branches',
   { found: number; hit: number }
@@ -34,7 +35,7 @@ export const summarize = (lcovData: LcovFile[]): LcovSummary => {
 }
 
 interface ParseResult {
-  data: LcovFile[]
+  data: Lcov
   summary: LcovSummary
 }
 

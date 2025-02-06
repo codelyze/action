@@ -5,12 +5,13 @@ import * as codelyze from './codelyze'
 import { createCommitStatus, percentString } from './util'
 import { ContextInfo } from './types'
 import { ChangeHunkSet, DiffCoverageOutput } from './diff'
+import type { Lcov } from './lcov'
 
 interface Props {
   token: string
   ghToken: string
   summary: LcovSummary
-  data: unknown
+  data: Lcov
   context: ContextInfo
   diffCoverage: DiffCoverageOutput
   shouldAddAnnotation: boolean
