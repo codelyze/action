@@ -5,6 +5,12 @@ import * as diff from '../src/diff'
 import * as github from '@actions/github'
 import * as util from '../src/util'
 import { CommitStatusResponse } from '../src/types'
+import { jest } from '@jest/globals'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const runMock = jest.spyOn(main, 'run')
 
