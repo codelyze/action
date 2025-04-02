@@ -11,7 +11,7 @@ describe('index', () => {
   it('calls run when imported', async () => {
     const main = await import('../src/main')
     const runMock = jest.spyOn(main, 'run')
-    await import('../src/index');
+    await import('../src/index')
 
     expect(runMock).toHaveBeenCalled()
   })
