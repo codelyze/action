@@ -2,6 +2,12 @@ import { LcovFile } from 'lcov-parse'
 import { analyzeDiffCoverage } from '../src/diff'
 import { ContextInfo, Octokit } from '../src/types'
 import { readFileSync } from 'fs'
+import { jest } from '@jest/globals'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 describe('diff', () => {
   it('should correctly calculate coverage percentage for added lines in diff', async () => {

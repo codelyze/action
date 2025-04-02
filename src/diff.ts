@@ -38,8 +38,8 @@ export const analyzeDiffCoverage = async ({
 
   let diff = parseDiff(result.data.toString())
 
-  diff = diff.filter(file =>
-    lcovFiles.find(lcovFile => lcovFile.file === file.to)
+  diff = diff.filter((file) =>
+    lcovFiles.find((lcovFile) => lcovFile.file === file.to)
   )
 
   const fileChanges: Map<string, AddChange[]> = new Map()
@@ -73,7 +73,7 @@ export const analyzeDiffCoverage = async ({
     }
     let coveredOrSkipped = false
     for (const detail of lcovFile.lines.details) {
-      const inChanges = changes.find(change => change.ln === detail.line)
+      const inChanges = changes.find((change) => change.ln === detail.line)
 
       if (inChanges) {
         if (detail.hit > 0) {

@@ -24,7 +24,7 @@ interface Response {
 }
 
 export const coverage = async (cov: Coverage): Promise<Response | undefined> =>
-  await (
+  (await (
     await fetch('https://api.codelyze.com/v1/projects/coverage', {
       method: 'POST',
       body: JSON.stringify({ ...cov, provider: 'github' }),
@@ -32,4 +32,4 @@ export const coverage = async (cov: Coverage): Promise<Response | undefined> =>
         'Content-Type': 'application/json'
       }
     })
-  ).json()
+  ).json()) as Response
