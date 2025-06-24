@@ -59,7 +59,7 @@
     "eslint-import-resolver-typescript": "^4.4.3",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "^28.14.0",
-    "eslint-plugin-prettier": "^5.4.1",
+    "eslint-plugin-prettier": "^5.5.0",
     "jest": "^30.0.0",
     "make-coverage-badge": "^1.2.0",
     "prettier": "^3.5.3",
