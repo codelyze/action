@@ -51,7 +51,7 @@
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/jest": "^30.0.0",
     "@types/lcov-parse": "^1.0.2",
-    "@types/node": "^24.8.1",
+    "@types/node": "^24.9.1",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.45.0",
     "eslint": "^9.38.0",
