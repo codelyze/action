@@ -47,7 +47,7 @@
     "@github/local-action": "^5.1.0",
     "@jest/globals": "^30.0.4",
     "@rollup/plugin-commonjs": "^28.0.1",
-    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/jest": "^30.0.0",
     "@types/lcov-parse": "^1.0.2",
