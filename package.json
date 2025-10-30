@@ -43,7 +43,7 @@
     "parse-diff": "^0.11.1"
   },
   "devDependencies": {
-    "@eslint/compat": "^1.4.0",
+    "@eslint/compat": "^1.4.1",
     "@github/local-action": "^6.0.0",
     "@jest/globals": "^30.0.4",
     "@rollup/plugin-commonjs": "^28.0.9",
