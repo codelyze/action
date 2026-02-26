@@ -39,12 +39,14 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.11.1",
+    "@actions/github": "^9.0.0",
+    "@actions/http-client": "^4.0.0",
     "lcov-parse": "^1.0.0",
     "parse-diff": "^0.11.1"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.1",
-    "@github/local-action": "^6.0.0",
+    "@github/local-action": "^7.0.1",
     "@jest/globals": "^30.0.4",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
@@ -71,5 +73,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "*"
+  },
+  "overrides": {
+    "undici": "^6.23.0"
   }
 }
