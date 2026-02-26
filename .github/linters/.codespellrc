@@ -1,5 +1,2 @@
 [codespell]
-skip = dist/*,node_modules/*
-# The words below appear in bundled third-party code in dist/index.js
-# and cannot be fixed upstream. Ignoring them here.
-ignore-words-list = afterwords,collapsable,convience,boolen,te,implementors
+skip = dist/*,node_modules/*,package-lock.json
