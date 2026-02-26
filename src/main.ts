@@ -18,11 +18,11 @@ export async function run(): Promise<void> {
     })
     const ghToken = core.getInput('gh-token')
     const shouldAddAnnotation = core.getBooleanInput('annotations') ?? false
-    const threshold = Number.parseFloat(core.getInput('threshold'))
-    const differenceThreshold = Number.parseFloat(
-      core.getInput('difference-threshold')
-    )
-    const patchThreshold = Number.parseFloat(core.getInput('patch-threshold'))
+    const threshold = Number.parseFloat(core.getInput('threshold')) || 0
+    const differenceThreshold =
+      Number.parseFloat(core.getInput('difference-threshold')) || 0
+    const patchThreshold =
+      Number.parseFloat(core.getInput('patch-threshold')) || 0
     const emptyPatch = core.getBooleanInput('skip-empty-patch') ?? false
 
     const { summary, data } = await analyze(path)

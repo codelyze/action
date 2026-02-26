@@ -31671,9 +31671,9 @@ async function run() {
         });
         const ghToken = coreExports.getInput('gh-token');
         const shouldAddAnnotation = coreExports.getBooleanInput('annotations') ?? false;
-        const threshold = Number.parseFloat(coreExports.getInput('threshold'));
-        const differenceThreshold = Number.parseFloat(coreExports.getInput('difference-threshold'));
-        const patchThreshold = Number.parseFloat(coreExports.getInput('patch-threshold'));
+        const threshold = Number.parseFloat(coreExports.getInput('threshold')) || 0;
+        const differenceThreshold = Number.parseFloat(coreExports.getInput('difference-threshold')) || 0;
+        const patchThreshold = Number.parseFloat(coreExports.getInput('patch-threshold')) || 0;
         const emptyPatch = coreExports.getBooleanInput('skip-empty-patch') ?? false;
         const { summary, data } = await analyze(path);
         const octokit = githubExports.getOctokit(ghToken);
