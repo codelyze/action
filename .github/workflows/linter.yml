@@ -40,18 +40,16 @@ jobs:
         id: super-linter
         uses: super-linter/super-linter/slim@v8
         env:
+          CHECKOV_FILE_NAME: .checkov.yml
           DEFAULT_BRANCH: main
+          FILTER_REGEX_EXCLUDE: dist/**/*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TYPESCRIPT_DEFAULT_STYLE: prettier
-          VALIDATE_JSCPD: false
-          VALIDATE_NATURAL_LANGUAGE: false
-          VALIDATE_CHECKOV: false
-          VALIDATE_TYPESCRIPT_STANDARD: false
-          VALIDATE_JAVASCRIPT_ES: false
-          VALIDATE_JAVASCRIPT_STANDARD: false
-          VALIDATE_TYPESCRIPT_ES: false
-          VALIDATE_JSON: false
+          LINTER_RULES_PATH: .
+          VALIDATE_ALL_CODEBASE: true
           VALIDATE_BIOME_FORMAT: false
           VALIDATE_BIOME_LINT: false
           VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
-          FILTER_REGEX_EXCLUDE: (dist/.*|package-lock\.json)
+          VALIDATE_JAVASCRIPT_ES: false
+          VALIDATE_JSCPD: false
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_JSON: false
