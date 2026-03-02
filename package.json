@@ -54,7 +54,7 @@
     "@types/jest": "^30.0.0",
     "@types/lcov-parse": "^1.0.2",
     "@types/node": "^25.3.2",
-    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
