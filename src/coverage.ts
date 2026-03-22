@@ -82,7 +82,7 @@ export const coverage = async ({
     }
     const success = evaluateState([
       rate * 100 >= threshold,
-      Math.abs(diff * 100) >= differenceThreshold // absolute value because it is diff
+      diff * 100 >= -differenceThreshold
     ])
     const failDescription = success
       ? ''
