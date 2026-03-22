@@ -121,7 +121,9 @@ describe('coverage', () => {
         diffCoverage: createMockDiffCoverage(),
         shouldAddAnnotation: false,
         threshold: 0,
-        differenceThreshold: 0
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
       })
 
       expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
@@ -154,7 +156,9 @@ describe('coverage', () => {
         diffCoverage: createMockDiffCoverage(),
         shouldAddAnnotation: false,
         threshold: 0,
-        differenceThreshold: 0
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
       })
 
       expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
@@ -187,7 +191,9 @@ describe('coverage', () => {
         diffCoverage: createMockDiffCoverage(),
         shouldAddAnnotation: false,
         threshold: 0,
-        differenceThreshold: 2
+        differenceThreshold: 2,
+        patchThreshold: 0,
+        emptyPatch: false
       })
 
       expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
@@ -220,7 +226,9 @@ describe('coverage', () => {
         diffCoverage: createMockDiffCoverage(),
         shouldAddAnnotation: false,
         threshold: 0,
-        differenceThreshold: 5
+        differenceThreshold: 5,
+        patchThreshold: 0,
+        emptyPatch: false
       })
 
       expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
@@ -253,7 +261,9 @@ describe('coverage', () => {
         diffCoverage: createMockDiffCoverage(),
         shouldAddAnnotation: false,
         threshold: 0,
-        differenceThreshold: 0
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
       })
 
       expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
@@ -286,7 +296,9 @@ describe('coverage', () => {
         diffCoverage: createMockDiffCoverage(),
         shouldAddAnnotation: false,
         threshold: 60,
-        differenceThreshold: 10
+        differenceThreshold: 10,
+        patchThreshold: 0,
+        emptyPatch: false
       })
 
       expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
