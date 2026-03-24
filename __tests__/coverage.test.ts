@@ -307,5 +307,110 @@ describe('coverage', () => {
         })
       )
     })
+
+    it('should only mention threshold in failure message when only threshold fails', async () => {
+      codelyzeMock.coverage.mockResolvedValue({
+        check: {
+          linesHit: 50,
+          linesFound: 100,
+          functionsHit: 0,
+          functionsFound: 0,
+          branchesHit: 0,
+          branchesFound: 0
+        },
+        metadata: { token: 'test-token' }
+      })
+
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: createMockDiffCoverage(),
+        shouldAddAnnotation: false,
+        threshold: 60,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      const call = utilMock.createCommitStatus.mock.calls[0][0] as {
+        description: string
+      }
+      expect(call.description).toContain('threshold')
+      expect(call.description).not.toContain('difference-threshold')
+    })
+
+    it('should only mention difference-threshold in failure message when only difference-threshold fails', async () => {
+      codelyzeMock.coverage.mockResolvedValue({
+        check: {
+          linesHit: 60,
+          linesFound: 100,
+          functionsHit: 0,
+          functionsFound: 0,
+          branchesHit: 0,
+          branchesFound: 0
+        },
+        metadata: { token: 'test-token' }
+      })
+
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(55, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: createMockDiffCoverage(),
+        shouldAddAnnotation: false,
+        threshold: 50,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      const call = utilMock.createCommitStatus.mock.calls[0][0] as {
+        description: string
+      }
+      expect(call.description).toContain('difference-threshold')
+      expect(call.description).not.toContain('Failed: threshold')
+    })
+
+    it('should mention both thresholds in failure message when both fail', async () => {
+      codelyzeMock.coverage.mockResolvedValue({
+        check: {
+          linesHit: 60,
+          linesFound: 100,
+          functionsHit: 0,
+          functionsFound: 0,
+          branchesHit: 0,
+          branchesFound: 0
+        },
+        metadata: { token: 'test-token' }
+      })
+
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(40, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: createMockDiffCoverage(),
+        shouldAddAnnotation: false,
+        threshold: 60,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      const call = utilMock.createCommitStatus.mock.calls[0][0] as {
+        description: string
+      }
+      expect(call.description).toContain('threshold')
+      expect(call.description).toContain('difference-threshold')
+    })
   })
 })

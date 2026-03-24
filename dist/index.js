@@ -36632,13 +36632,15 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
                 description: `${percentString(rate)} coverage`
             };
         }
-        const success = evaluateState([
-            rate * 100 >= threshold,
-            diff * 100 >= -differenceThreshold
-        ]);
-        const failDescription = success
-            ? ''
-            : `Failed to satisfy threshold: ${threshold}% and difference-threshold: ${differenceThreshold}%`;
+        const failures = [];
+        if (rate * 100 < threshold) {
+            failures.push(`threshold (${(rate * 100).toFixed(2)}% < ${threshold}%)`);
+        }
+        if (diff * 100 < -differenceThreshold) {
+            failures.push(`difference-threshold (${(diff * 100).toFixed(2)}% < -${differenceThreshold}%)`);
+        }
+        const success = failures.length === 0;
+        const failDescription = success ? '' : `Failed: ${failures.join('; ')}`;
         return {
             state: toState(success),
             description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}. ${failDescription}`
