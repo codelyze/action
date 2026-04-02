@@ -63,8 +63,12 @@ export const coverage = async ({
   const utoken = res?.metadata?.token
 
   const rate = summary.lines.hit / summary.lines.found
+  // Round to 4 decimal places (2dp in percentage) to avoid floating-point
+  // noise causing false failures when coverage is effectively unchanged.
+  // This matches the precision used by percentString for display.
   const diff = comparison
-    ? rate - comparison.linesHit / comparison.linesFound
+    ? Math.round((rate - comparison.linesHit / comparison.linesFound) * 1e4) /
+      1e4
     : undefined
 
   core.debug(`rate: ${rate}`)

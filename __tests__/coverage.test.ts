@@ -273,6 +273,44 @@ describe('coverage', () => {
       )
     })
 
+    it('should pass when coverage is effectively the same but computed from different denominators', async () => {
+      // 150/151 = 0.99337748... vs 149/150 = 0.99333...
+      // Raw diff is -0.00004415..., which would previously trigger a failure
+      // due to floating-point noise despite displaying as -0%
+      codelyzeMock.coverage.mockResolvedValue({
+        check: {
+          linesHit: 150,
+          linesFound: 151,
+          functionsHit: 0,
+          functionsFound: 0,
+          branchesHit: 0,
+          branchesFound: 0
+        },
+        metadata: { token: 'test-token' }
+      })
+
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(149, 150),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: createMockDiffCoverage(),
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
+        expect.objectContaining({
+          state: 'success'
+        })
+      )
+    })
+
     it('should combine threshold and difference-threshold checks', async () => {
       codelyzeMock.coverage.mockResolvedValue({
         check: {
