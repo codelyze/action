@@ -39,14 +39,15 @@ export const upsertPrComment = async ({
 
   const body = renderComment({ flags, overallHit, overallFound, commit, diff })
 
-  // Find existing comment to upsert
-  const comments = await octokit.rest.issues.listComments({
+  // Find existing comment to upsert (paginate to handle PRs with many comments)
+  const allComments = await octokit.paginate(octokit.rest.issues.listComments, {
     owner: context.owner,
     repo: context.repo,
-    issue_number: prNumber
+    issue_number: prNumber,
+    per_page: 100
   })
 
-  const existing = comments.data.find((c) => c.body?.includes(MARKER))
+  const existing = allComments.find((c) => c.body?.includes(MARKER))
 
   if (existing) {
     await octokit.rest.issues.updateComment({
@@ -66,7 +67,6 @@ export const upsertPrComment = async ({
 }
 
 const getPrNumber = (): number | undefined => {
-  // GITHUB_REF=refs/pull/123/merge or GITHUB_EVENT_PATH payload
   const ref = process.env.GITHUB_REF ?? ''
   const match = ref.match(/refs\/pull\/(\d+)\//)
   return match ? Number(match[1]) : undefined
@@ -82,9 +82,10 @@ export const fetchFlagSummaries = async ({
   branch: string
 }): Promise<FlagSummary[]> => {
   try {
-    const params = new URLSearchParams({ token, commit, branch })
+    const params = new URLSearchParams({ commit, branch })
     const res = await fetch(
-      `https://api.codelyze.com/v1/projects/coverage/flags?${params}`
+      `https://api.codelyze.com/v1/projects/coverage/flags?${params}`,
+      { headers: { Authorization: `Bearer ${token}` } }
     )
     if (!res.ok) return []
     return (await res.json()) as FlagSummary[]
@@ -113,7 +114,8 @@ const renderComment = ({
     .map((f) => {
       const rate = f.linesFound > 0 ? f.linesHit / f.linesFound : 0
       const cf = f.carryforward ? ' _(cf)_' : ''
-      return `| \`${f.flagName}\`${cf} | ${f.linesHit}/${f.linesFound} | ${percentString(rate)} |`
+      const safeName = f.flagName.replace(/[|\n\r`]/g, ' ').trim()
+      return `| \`${safeName}\`${cf} | ${f.linesHit}/${f.linesFound} | ${percentString(rate)} |`
     })
     .join('\n')
 

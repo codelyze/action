@@ -24,7 +24,7 @@ export async function run(): Promise<void> {
     const patchThreshold =
       Number.parseFloat(core.getInput('patch-threshold')) || 0
     const emptyPatch = core.getBooleanInput('skip-empty-patch') ?? false
-    const flag = core.getInput('flag') || undefined
+    const flag = core.getInput('flag', { trimWhitespace: true }) || undefined
 
     const { summary, data } = await analyze(path)
     const octokit = github.getOctokit(ghToken)
