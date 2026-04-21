@@ -42,6 +42,12 @@ inputs:
       'if true, skip the commit status for a patch that has no coverable line
       changes.'
     default: 'false'
+  flag:
+    description:
+      'Flag identifier for this coverage upload (e.g. "unit", "e2e"). Used to
+      track multiple test types independently.'
+    required: false
+    default: ''
 
 outputs:
   coverage:

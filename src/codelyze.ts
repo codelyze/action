@@ -16,6 +16,8 @@ interface Coverage {
   commitDate?: string
   compareSha?: string
   data?: Lcov
+  flag?: string
+  parentShas?: string[]
 }
 
 interface Response {
