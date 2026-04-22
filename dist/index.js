@@ -33777,7 +33777,83 @@ const createCommitStatus = async (props) => {
     });
 };
 
-const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, shouldAddAnnotation = true, threshold = 0, differenceThreshold = 0, patchThreshold = 0, emptyPatch = false }) => {
+const MARKER = '<!-- codelyze-coverage-comment -->';
+const upsertPrComment = async ({ octokit, context, token, commit, branch, overallHit, overallFound, diff }) => {
+    // Only comment on PRs
+    const prNumber = getPrNumber();
+    if (!prNumber)
+        return;
+    // Fetch per-flag summaries from backend
+    const flags = await fetchFlagSummaries({ token, commit, branch });
+    const body = renderComment({ flags, overallHit, overallFound, commit, diff });
+    // Find existing comment to upsert (paginate to handle PRs with many comments)
+    const allComments = await octokit.paginate(octokit.rest.issues.listComments, {
+        owner: context.owner,
+        repo: context.repo,
+        issue_number: prNumber,
+        per_page: 100
+    });
+    const existing = allComments.find((c) => c.body?.includes(MARKER));
+    if (existing) {
+        await octokit.rest.issues.updateComment({
+            owner: context.owner,
+            repo: context.repo,
+            comment_id: existing.id,
+            body
+        });
+    }
+    else {
+        await octokit.rest.issues.createComment({
+            owner: context.owner,
+            repo: context.repo,
+            issue_number: prNumber,
+            body
+        });
+    }
+};
+const getPrNumber = () => {
+    const ref = process.env.GITHUB_REF ?? '';
+    const match = ref.match(/refs\/pull\/(\d+)\//);
+    return match ? Number(match[1]) : undefined;
+};
+const fetchFlagSummaries = async ({ token, commit, branch }) => {
+    try {
+        const params = new URLSearchParams({ commit, branch });
+        const res = await fetch(`https://api.codelyze.com/v1/projects/coverage/flags?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok)
+            return [];
+        return (await res.json());
+    }
+    catch {
+        return [];
+    }
+};
+const renderComment = ({ flags, overallHit, overallFound, commit, diff }) => {
+    const overallRate = overallFound > 0 ? overallHit / overallFound : 0;
+    const sha = commit.slice(0, 8);
+    const rows = flags
+        .map((f) => {
+        const rate = f.linesFound > 0 ? f.linesHit / f.linesFound : 0;
+        const cf = f.carryforward ? ' _(cf)_' : '';
+        const safeName = f.flagName.replace(/[|\n\r`]/g, ' ').trim();
+        return `| \`${safeName}\`${cf} | ${f.linesHit}/${f.linesFound} | ${percentString(rate)} |`;
+    })
+        .join('\n');
+    const flagTable = flags.length > 0
+        ? `| Flag | Lines | Coverage |\n| --- | --- | --- |\n${rows}\n`
+        : '';
+    return `${MARKER}
+## Coverage report for ${sha}
+
+| | Lines | Coverage |
+| --- | --- | --- |
+| **Overall** | ${overallHit}/${overallFound} | **${percentString(overallRate)}**${diff != null ? ` (${percentString(diff)})` : ''} |
+
+${flagTable}
+<sub>_cf = carried forward from a previous commit_</sub>`;
+};
+
+const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, shouldAddAnnotation = true, threshold = 0, differenceThreshold = 0, patchThreshold = 0, emptyPatch = false, flag }) => {
     const octokit = getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = context;
     const { data: commit } = await octokit.rest.repos.getCommit({
@@ -33801,7 +33877,9 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
         authorName: commit.commit.author?.name || undefined,
         authorEmail: commit.commit.author?.email || undefined,
         commitDate: commit.commit.author?.date,
-        data
+        parentShas: commit.parents.map((p) => p.sha),
+        data,
+        flag
     });
     const comparison = res?.check;
     const utoken = res?.metadata?.token;
@@ -33842,6 +33920,39 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
         commitContext: 'codelyze/project',
         ...message
     });
+    // Post statuses for all flags (including carryforward ones not uploaded here).
+    try {
+        const branch = context.ref?.replace('refs/heads/', '') ?? '';
+        const flagCoverages = await fetchFlagSummaries({
+            token,
+            commit: sha,
+            branch
+        });
+        for (const fc of flagCoverages) {
+            const flagRate = fc.linesFound > 0 ? fc.linesHit / fc.linesFound : 0;
+            const cf = fc.carryforward ? ' (cf)' : '';
+            await createCommitStatus({
+                token: utoken ? utoken : ghToken,
+                context,
+                commitContext: `codelyze/${fc.flagName}`,
+                state: 'success',
+                description: `${percentString(flagRate)} coverage${cf}`
+            });
+        }
+    }
+    catch (err) {
+        debug(`Flag statuses failed: ${err}`);
+    }
+    await upsertPrComment({
+        octokit,
+        context,
+        token,
+        commit: sha,
+        branch: ref?.replace('refs/heads/', '') ?? '',
+        overallHit: summary.lines.hit,
+        overallFound: summary.lines.found,
+        diff
+    }).catch((err) => debug(`PR comment failed: ${err}`));
     const { linesHit, linesFound } = diffCoverage;
     const diffCoverageRate = linesHit / linesFound;
     let diffCoverageStatus;
@@ -33982,6 +34093,7 @@ async function run() {
         const differenceThreshold = Number.parseFloat(getInput('difference-threshold')) || 0;
         const patchThreshold = Number.parseFloat(getInput('patch-threshold')) || 0;
         const emptyPatch = getBooleanInput('skip-empty-patch') ?? false;
+        const flag = getInput('flag', { trimWhitespace: true }) || undefined;
         const { summary, data } = await analyze(path);
         const octokit = getOctokit(ghToken);
         const context = getContextInfo();
@@ -34001,7 +34113,8 @@ async function run() {
             threshold,
             differenceThreshold,
             patchThreshold,
-            emptyPatch
+            emptyPatch,
+            flag
         });
         setOutput('coverage', { linesFound, linesCovered, rate });
         setOutput('difference', diff);

@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import type { Lcov, LcovSummary } from './lcov'
 import * as codelyze from './codelyze'
+import { fetchFlagSummaries, upsertPrComment } from './comment'
 import { createCommitStatus, percentString } from './util'
 import { ContextInfo } from './types'
 import { ChangeHunkSet, DiffCoverageOutput } from './diff'
@@ -18,6 +19,7 @@ interface Props {
   differenceThreshold: number
   patchThreshold: number
   emptyPatch: boolean
+  flag?: string
 }
 
 export const coverage = async ({
@@ -31,7 +33,8 @@ export const coverage = async ({
   threshold = 0,
   differenceThreshold = 0,
   patchThreshold = 0,
-  emptyPatch = false
+  emptyPatch = false,
+  flag
 }: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = context
@@ -57,7 +60,9 @@ export const coverage = async ({
     authorName: commit.commit.author?.name || undefined,
     authorEmail: commit.commit.author?.email || undefined,
     commitDate: commit.commit.author?.date,
-    data
+    parentShas: commit.parents.map((p) => p.sha),
+    data,
+    flag
   })
   const comparison = res?.check
   const utoken = res?.metadata?.token
@@ -107,6 +112,40 @@ export const coverage = async ({
     commitContext: 'codelyze/project',
     ...message
   })
+
+  // Post statuses for all flags (including carryforward ones not uploaded here).
+  try {
+    const branch = context.ref?.replace('refs/heads/', '') ?? ''
+    const flagCoverages = await fetchFlagSummaries({
+      token,
+      commit: sha,
+      branch
+    })
+    for (const fc of flagCoverages) {
+      const flagRate = fc.linesFound > 0 ? fc.linesHit / fc.linesFound : 0
+      const cf = fc.carryforward ? ' (cf)' : ''
+      await createCommitStatus({
+        token: utoken ? utoken : ghToken,
+        context,
+        commitContext: `codelyze/${fc.flagName}`,
+        state: 'success',
+        description: `${percentString(flagRate)} coverage${cf}`
+      })
+    }
+  } catch (err) {
+    core.debug(`Flag statuses failed: ${err}`)
+  }
+
+  await upsertPrComment({
+    octokit,
+    context,
+    token,
+    commit: sha,
+    branch: ref?.replace('refs/heads/', '') ?? '',
+    overallHit: summary.lines.hit,
+    overallFound: summary.lines.found,
+    diff
+  }).catch((err) => core.debug(`PR comment failed: ${err}`))
 
   const { linesHit, linesFound } = diffCoverage
   const diffCoverageRate = linesHit / linesFound

@@ -18,6 +18,30 @@ A GitHub action to upload coverage to codelyze.com.
     path: coverage/lcov.info
 ```
 
+For projects with multiple test types, use the `flag` input to track each
+independently:
+
+```yml
+- name: Upload unit coverage
+  uses: codelyze/action@2.1.0
+  with:
+    token: ${{ secrets.CODELYZE_TOKEN }}
+    path: coverage/unit.lcov
+    flag: unit
+
+- name: Upload e2e coverage
+  uses: codelyze/action@2.1.0
+  with:
+    token: ${{ secrets.CODELYZE_TOKEN }}
+    path: coverage/e2e.lcov
+    flag: e2e
+```
+
+Flags must be configured in the codelyze.com project settings before uploading.
+Each flagged upload creates a `codelyze/{flag}` commit status alongside the
+overall `codelyze/project` status. Coverage from flags is union-merged (a line
+is covered if any flag covers it).
+
 ### Permission
 
 The following workflow permissions are necessary:
@@ -26,6 +50,7 @@ The following workflow permissions are necessary:
 permissions:
   contents: read
   statuses: write
+  pull-requests: write
 ```
 
 ### Inputs
@@ -42,6 +67,7 @@ permissions:
 | `difference-threshold` | The minimum total difference allowed between the current commit and the reference one                                                                                                                                    | no       | 0              |
 | `patch-threshold`      | the minimum value for patch coverage: the minimum ratio of new lines that are not covered.                                                                                                                               | no       | 0              |
 | `skip-empty-patch`     | If true don't even add a commit status for a patch that has no changes.                                                                                                                                                  | no       | false          |
+| `flag`                 | Flag identifier for this coverage upload (e.g. `unit`, `e2e`). Used to track multiple test types independently. Creates a `codelyze/{flag}` commit status in addition to `codelyze/project`.                             | no       |                |
 
 ### Outputs
 

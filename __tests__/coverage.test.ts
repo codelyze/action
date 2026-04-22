@@ -4,11 +4,13 @@ import * as coreMock from './fixture/mocks/core.ts'
 import * as githubMock from './fixture/mocks/github.ts'
 import * as codelyzeMock from './fixture/mocks/codelyze.ts'
 import * as utilMock from './fixture/mocks/util.ts'
+import * as commentMock from './fixture/mocks/comment.ts'
 
 jest.unstable_mockModule('@actions/core', () => coreMock)
 jest.unstable_mockModule('@actions/github', () => githubMock)
 jest.unstable_mockModule('../src/codelyze', () => codelyzeMock)
 jest.unstable_mockModule('../src/util', () => utilMock)
+jest.unstable_mockModule('../src/comment', () => commentMock)
 
 describe('coverage', () => {
   const createMockContext = (): {
@@ -56,6 +58,9 @@ describe('coverage', () => {
     coreMock.getInput.mockReturnValue('')
     coreMock.getBooleanInput.mockReturnValue(false)
 
+    commentMock.upsertPrComment.mockResolvedValue(undefined)
+    commentMock.fetchFlagSummaries.mockResolvedValue([])
+
     codelyzeMock.coverage.mockResolvedValue({
       check: {
         linesHit: 50,
@@ -79,7 +84,8 @@ describe('coverage', () => {
                   email: 'test@test.com',
                   date: '2024-01-01'
                 }
-              }
+              },
+              parents: [{ sha: 'parent-sha' }]
             }
           })
         }
@@ -449,6 +455,85 @@ describe('coverage', () => {
       }
       expect(call.description).toContain('threshold')
       expect(call.description).toContain('difference-threshold')
+    })
+  })
+
+  describe('flags', () => {
+    it('forwards flag to codelyze.coverage', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: createMockDiffCoverage(),
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false,
+        flag: 'unit'
+      })
+
+      expect(codelyzeMock.coverage).toHaveBeenCalledWith(
+        expect.objectContaining({ flag: 'unit' })
+      )
+    })
+
+    it('forwards parentShas to codelyze.coverage', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: createMockDiffCoverage(),
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      expect(codelyzeMock.coverage).toHaveBeenCalledWith(
+        expect.objectContaining({ parentShas: ['parent-sha'] })
+      )
+    })
+
+    it('posts a commit status for each flag returned by fetchFlagSummaries', async () => {
+      commentMock.fetchFlagSummaries.mockResolvedValue([
+        {
+          flagName: 'unit',
+          linesHit: 80,
+          linesFound: 100,
+          carryforward: false
+        },
+        { flagName: 'e2e', linesHit: 40, linesFound: 50, carryforward: true }
+      ])
+
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: createMockDiffCoverage(),
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
+        expect.objectContaining({ commitContext: 'codelyze/unit' })
+      )
+      expect(utilMock.createCommitStatus).toHaveBeenCalledWith(
+        expect.objectContaining({ commitContext: 'codelyze/e2e' })
+      )
     })
   })
 })
