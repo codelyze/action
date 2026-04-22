@@ -40,7 +40,7 @@
   "dependencies": {
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.0.0",
-    "@actions/http-client": "^4.0.0",
+    "@actions/http-client": "^4.0.1",
     "lcov-parse": "^1.0.0",
     "parse-diff": "^0.11.1"
   },
