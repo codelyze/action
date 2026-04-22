@@ -42,7 +42,7 @@
     "@actions/github": "^9.0.0",
     "@actions/http-client": "^4.0.1",
     "lcov-parse": "^1.0.0",
-    "parse-diff": "^0.11.1"
+    "parse-diff": "^0.12.0"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.5",
