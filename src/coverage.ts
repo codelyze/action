@@ -12,7 +12,7 @@ interface Props {
   summary: LcovSummary
   data: Lcov
   context: ContextInfo
-  diffCoverage: DiffCoverageOutput
+  diffCoverage: DiffCoverageOutput | null
   shouldAddAnnotation: boolean
   threshold: number
   differenceThreshold: number
@@ -35,6 +35,8 @@ export const coverage = async ({
 }: Props) => {
   const octokit = github.getOctokit(ghToken)
   const { repo, owner, ref, sha, compareSha } = context
+  const linesHit = diffCoverage?.linesHit ?? 0
+  const linesFound = diffCoverage?.linesFound ?? 0
 
   const { data: commit } = await octokit.rest.repos.getCommit({
     owner,
@@ -97,7 +99,7 @@ export const coverage = async ({
     const failDescription = success ? '' : `Failed: ${failures.join('; ')}`
     return {
       state: toState(success),
-      description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}. ${failDescription}`
+      description: `${percentString(rate)} (${percentString(diff)}) compared to ${(compareSha ?? 'unknown').slice(0, 8)}. ${failDescription}`
     }
   })()
 
@@ -108,11 +110,10 @@ export const coverage = async ({
     ...message
   })
 
-  const { linesHit, linesFound } = diffCoverage
-  const diffCoverageRate = linesHit / linesFound
+  const diffCoverageRate = linesFound > 0 ? linesHit / linesFound : 0
 
   let diffCoverageStatus
-  if (!(emptyPatch && linesFound === 0)) {
+  if (diffCoverage && !(emptyPatch && linesFound === 0)) {
     const { data: commitStatusData } = await createCommitStatus({
       token: utoken ? utoken : ghToken,
       context,
@@ -126,7 +127,7 @@ export const coverage = async ({
     diffCoverageStatus = commitStatusData
   }
 
-  if (shouldAddAnnotation) {
+  if (shouldAddAnnotation && diffCoverage) {
     addAnnotations(diffCoverage.uncoveredHunks)
   }
 

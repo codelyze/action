@@ -51,11 +51,13 @@ export async function run(): Promise<void> {
 
     core.setOutput('coverage', { linesFound, linesCovered, rate })
     core.setOutput('difference', diff)
-    core.setOutput('patch', {
-      linesFound: diffCoverage.linesFound,
-      linesCovered: diffCoverage.linesHit,
-      rate: diffCoverage.linesHit / diffCoverage.linesFound
-    })
+    if (diffCoverage) {
+      core.setOutput('patch', {
+        linesFound: diffCoverage.linesFound,
+        linesCovered: diffCoverage.linesHit,
+        rate: diffCoverage.linesHit / diffCoverage.linesFound
+      })
+    }
   } catch (error) {
     core.debug(`${error}`)
     if (isErrorLike(error)) core.setFailed(error.message)

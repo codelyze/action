@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals'
+import type { DiffCoverageOutput } from '../src/diff'
 
 import * as coreMock from './fixture/mocks/core.ts'
 import * as githubMock from './fixture/mocks/github.ts'
@@ -11,18 +12,23 @@ jest.unstable_mockModule('../src/codelyze', () => codelyzeMock)
 jest.unstable_mockModule('../src/util', () => utilMock)
 
 describe('coverage', () => {
-  const createMockContext = (): {
+  const createMockContext = (overrides?: {
+    compareSha?: string
+  }): {
     repo: string
     owner: string
     sha: string
     ref: string
-    compareSha: string
+    compareSha?: string
   } => ({
     repo: 'repo',
     owner: 'owner',
     sha: 'sha',
     ref: 'ref',
-    compareSha: 'compareSha'.padEnd(40, '0')
+    compareSha:
+      overrides && 'compareSha' in overrides
+        ? overrides.compareSha
+        : 'compareSha'.padEnd(40, '0')
   })
 
   const createMockSummary = (
@@ -40,15 +46,18 @@ describe('coverage', () => {
 
   const createMockLcov = (): never[] => []
 
-  const createMockDiffCoverage = (): {
-    linesHit: number
-    linesFound: number
-    uncoveredHunks: never[]
-  } => ({
-    linesHit: 10,
-    linesFound: 10,
-    uncoveredHunks: []
-  })
+  const createMockDiffCoverage = (
+    isNull = false,
+    overrides?: Partial<DiffCoverageOutput>
+  ): DiffCoverageOutput | null => {
+    if (isNull) return null
+    return {
+      linesHit: 10,
+      linesFound: 10,
+      uncoveredHunks: [],
+      ...overrides
+    }
+  }
 
   beforeEach(() => {
     coreMock.setFailed.mockImplementation(() => {})
@@ -449,6 +458,103 @@ describe('coverage', () => {
       }
       expect(call.description).toContain('threshold')
       expect(call.description).toContain('difference-threshold')
+    })
+  })
+
+  describe('when comparison target is unavailable', () => {
+    it('should skip patch status when diffCoverage is null', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: null,
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      const patchCall = utilMock.createCommitStatus.mock.calls.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (call: any[]) => call[0].commitContext === 'codelyze/patch'
+      )
+      expect(patchCall).toBeUndefined()
+
+      const projectCall = utilMock.createCommitStatus.mock.calls.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (call: any[]) => call[0].commitContext === 'codelyze/project'
+      )
+      expect(projectCall).toBeDefined()
+    })
+
+    it('should skip patch status when diffCoverage is null even if emptyPatch is true', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: null,
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: true
+      })
+
+      const patchCall = utilMock.createCommitStatus.mock.calls.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (call: any[]) => call[0].commitContext === 'codelyze/patch'
+      )
+      expect(patchCall).toBeUndefined()
+    })
+
+    it('should skip annotations when diffCoverage is null', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: null,
+        shouldAddAnnotation: true,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      expect(coreMock.warning).not.toHaveBeenCalled()
+    })
+
+    it('should use "unknown" in project status description when compareSha is undefined', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext({ compareSha: undefined }),
+        diffCoverage: null,
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      const projectCall = utilMock.createCommitStatus.mock.calls.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (call: any[]) => call[0].commitContext === 'codelyze/project'
+      )
+      expect(projectCall).toBeDefined()
+      expect(projectCall![0].description).toContain('unknown')
     })
   })
 })

@@ -93,4 +93,38 @@ describe('action', () => {
     )
     expect(coreMock.error).not.toHaveBeenCalled()
   })
+
+  it('skips patch output when diffCoverage is null', async () => {
+    coreMock.getInput.mockImplementation((name: string): string => {
+      switch (name) {
+        case 'path':
+          return `${__dirname}/fixture/a.info`
+        default:
+          return ''
+      }
+    })
+    diffMock.analyzeDiffCoverage.mockResolvedValue(null)
+    covMock.coverage.mockResolvedValue({
+      rate: 0.5,
+      diff: undefined,
+      status: {} as CommitStatusResponse,
+      linesFound: 100,
+      linesCovered: 50
+    })
+
+    const { run } = await import('../src/main')
+    await run()
+
+    const patchCalls = coreMock.setOutput.mock.calls.filter(
+      (call: unknown[]) => call[0] === 'patch'
+    )
+    expect(patchCalls).toHaveLength(0)
+
+    const outputKeys = coreMock.setOutput.mock.calls.map(
+      (call: unknown[]) => call[0]
+    )
+    expect(outputKeys).toContain('coverage')
+    expect(outputKeys).toContain('difference')
+    expect(outputKeys).not.toContain('patch')
+  })
 })

@@ -6,6 +6,17 @@ import { jest } from '@jest/globals'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
+jest.unstable_mockModule('@actions/core', () => ({
+  debug: jest.fn(),
+  warning: jest.fn(),
+  error: jest.fn(),
+  info: jest.fn(),
+  setFailed: jest.fn(),
+  setOutput: jest.fn(),
+  getInput: jest.fn(),
+  getBooleanInput: jest.fn()
+}))
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
@@ -46,11 +57,11 @@ describe('diff', () => {
       context
     })
 
-    expect(result.linesHit).toBe(11)
-    expect(result.linesFound).toBe(12)
+    expect(result).not.toBeNull()
+    expect(result!.linesHit).toBe(11)
+    expect(result!.linesFound).toBe(12)
   })
 
-  // Handles empty diffString gracefully
   it('should handle empty diffString gracefully', async () => {
     const lcovFiles = [
       {
@@ -89,7 +100,92 @@ describe('diff', () => {
       context
     })
 
-    expect(result.linesHit).toBe(0)
-    expect(result.linesFound).toBe(0)
+    expect(result).not.toBeNull()
+    expect(result!.linesHit).toBe(0)
+    expect(result!.linesFound).toBe(0)
+  })
+
+  it('should return null when compareSha is undefined', async () => {
+    const octokit = {
+      rest: {
+        repos: {
+          compareCommitsWithBasehead: jest.fn()
+        }
+      }
+    } as unknown as Octokit
+
+    const context: ContextInfo = {
+      owner: 'owner',
+      repo: 'repo',
+      sha: 'sha',
+      ref: 'ref'
+    }
+
+    const result = await analyzeDiffCoverage({
+      lcovFiles: [],
+      octokit,
+      context
+    })
+
+    expect(octokit.rest.repos.compareCommitsWithBasehead).not.toHaveBeenCalled()
+    expect(result).toBeNull()
+  })
+
+  it('should return null when compareSha is the null SHA', async () => {
+    const octokit = {
+      rest: {
+        repos: {
+          compareCommitsWithBasehead: jest.fn()
+        }
+      }
+    } as unknown as Octokit
+
+    const context: ContextInfo = {
+      owner: 'owner',
+      repo: 'repo',
+      sha: 'sha',
+      ref: 'ref',
+      compareSha: '0000000000000000000000000000000000000000'
+    }
+
+    const result = await analyzeDiffCoverage({
+      lcovFiles: [],
+      octokit,
+      context
+    })
+
+    expect(octokit.rest.repos.compareCommitsWithBasehead).not.toHaveBeenCalled()
+    expect(result).toBeNull()
+  })
+
+  it('should return null when compare API returns 404', async () => {
+    const octokit = {
+      rest: {
+        repos: {
+          compareCommitsWithBasehead: jest.fn(async () => {
+            throw new Error(
+              'Not Found - https://docs.github.com/rest/commits/commits#compare-two-commits'
+            )
+          })
+        }
+      }
+    } as unknown as Octokit
+
+    const context: ContextInfo = {
+      owner: 'owner',
+      repo: 'repo',
+      sha: 'sha',
+      ref: 'ref',
+      compareSha: 'abc123'
+    }
+
+    const result = await analyzeDiffCoverage({
+      lcovFiles: [],
+      octokit,
+      context
+    })
+
+    expect(octokit.rest.repos.compareCommitsWithBasehead).toHaveBeenCalled()
+    expect(result).toBeNull()
   })
 })

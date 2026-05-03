@@ -5,7 +5,7 @@ export interface ContextInfo {
   owner: string
   sha: string
   ref: string
-  compareSha: string
+  compareSha?: string
 }
 
 export type Octokit = InstanceType<typeof GitHub>

@@ -33780,6 +33780,8 @@ const createCommitStatus = async (props) => {
 const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, shouldAddAnnotation = true, threshold = 0, differenceThreshold = 0, patchThreshold = 0, emptyPatch = false }) => {
     const octokit = getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = context;
+    const linesHit = diffCoverage?.linesHit ?? 0;
+    const linesFound = diffCoverage?.linesFound ?? 0;
     const { data: commit } = await octokit.rest.repos.getCommit({
         owner,
         repo,
@@ -33833,7 +33835,7 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
         const failDescription = success ? '' : `Failed: ${failures.join('; ')}`;
         return {
             state: toState(success),
-            description: `${percentString(rate)} (${percentString(diff)}) compared to ${compareSha.slice(0, 8)}. ${failDescription}`
+            description: `${percentString(rate)} (${percentString(diff)}) compared to ${(compareSha ?? 'unknown').slice(0, 8)}. ${failDescription}`
         };
     })();
     const { data: status } = await createCommitStatus({
@@ -33842,10 +33844,9 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
         commitContext: 'codelyze/project',
         ...message
     });
-    const { linesHit, linesFound } = diffCoverage;
-    const diffCoverageRate = linesHit / linesFound;
+    const diffCoverageRate = linesFound > 0 ? linesHit / linesFound : 0;
     let diffCoverageStatus;
-    if (!(emptyPatch && linesFound === 0)) {
+    if (diffCoverage && !(emptyPatch && linesFound === 0)) {
         const { data: commitStatusData } = await createCommitStatus({
             token: utoken ? utoken : ghToken,
             context,
@@ -33857,7 +33858,7 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
         });
         diffCoverageStatus = commitStatusData;
     }
-    if (shouldAddAnnotation) {
+    if (shouldAddAnnotation && diffCoverage) {
         addAnnotations(diffCoverage.uncoveredHunks);
     }
     return {
@@ -33896,15 +33897,28 @@ function _typeof(obj){"@babel/helpers - typeof";return _typeof="function"==typeo
 var parseDiffExports = requireParseDiff();
 var parseDiff = /*@__PURE__*/getDefaultExportFromCjs(parseDiffExports);
 
+const NULL_SHA = '0000000000000000000000000000000000000000';
 const analyzeDiffCoverage = async ({ lcovFiles, octokit, context }) => {
-    const result = await octokit.rest.repos.compareCommitsWithBasehead({
-        owner: context.owner,
-        repo: context.repo,
-        basehead: `${context.compareSha}...${context.sha}`,
-        mediaType: {
-            format: 'diff'
-        }
-    });
+    if (!context.compareSha || context.compareSha === NULL_SHA) {
+        warning(`No comparison target available (compareSha: ${context.compareSha ?? 'undefined'}). Skipping diff coverage analysis.`);
+        return null;
+    }
+    let result;
+    try {
+        result = await octokit.rest.repos.compareCommitsWithBasehead({
+            owner: context.owner,
+            repo: context.repo,
+            basehead: `${context.compareSha}...${context.sha}`,
+            mediaType: {
+                format: 'diff'
+            }
+        });
+    }
+    catch (error) {
+        debug(`${error}`);
+        warning(`Failed to compare commits (${context.compareSha}...${context.sha}): ${error instanceof Error ? error.message : String(error)}. Skipping diff coverage analysis.`);
+        return null;
+    }
     let diff = parseDiff(result.data.toString());
     diff = diff.filter((file) => lcovFiles.find((lcovFile) => lcovFile.file === file.to));
     const fileChanges = new Map();
@@ -34005,11 +34019,13 @@ async function run() {
         });
         setOutput('coverage', { linesFound, linesCovered, rate });
         setOutput('difference', diff);
-        setOutput('patch', {
-            linesFound: diffCoverage.linesFound,
-            linesCovered: diffCoverage.linesHit,
-            rate: diffCoverage.linesHit / diffCoverage.linesFound
-        });
+        if (diffCoverage) {
+            setOutput('patch', {
+                linesFound: diffCoverage.linesFound,
+                linesCovered: diffCoverage.linesHit,
+                rate: diffCoverage.linesHit / diffCoverage.linesFound
+            });
+        }
     }
     catch (error) {
         debug(`${error}`);

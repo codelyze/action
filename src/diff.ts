@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import parseDiff, { AddChange } from 'parse-diff'
 import { LcovFile } from 'lcov-parse'
 import { ContextInfo, Octokit } from './types'
@@ -22,19 +23,37 @@ export interface ChangeHunkSet {
   }[]
 }
 
+const NULL_SHA = '0000000000000000000000000000000000000000'
+
 export const analyzeDiffCoverage = async ({
   lcovFiles,
   octokit,
   context
-}: Props): Promise<DiffCoverageOutput> => {
-  const result = await octokit.rest.repos.compareCommitsWithBasehead({
-    owner: context.owner,
-    repo: context.repo,
-    basehead: `${context.compareSha}...${context.sha}`,
-    mediaType: {
-      format: 'diff'
-    }
-  })
+}: Props): Promise<DiffCoverageOutput | null> => {
+  if (!context.compareSha || context.compareSha === NULL_SHA) {
+    core.warning(
+      `No comparison target available (compareSha: ${context.compareSha ?? 'undefined'}). Skipping diff coverage analysis.`
+    )
+    return null
+  }
+
+  let result
+  try {
+    result = await octokit.rest.repos.compareCommitsWithBasehead({
+      owner: context.owner,
+      repo: context.repo,
+      basehead: `${context.compareSha}...${context.sha}`,
+      mediaType: {
+        format: 'diff'
+      }
+    })
+  } catch (error) {
+    core.debug(`${error}`)
+    core.warning(
+      `Failed to compare commits (${context.compareSha}...${context.sha}): ${error instanceof Error ? error.message : String(error)}. Skipping diff coverage analysis.`
+    )
+    return null
+  }
 
   let diff = parseDiff(result.data.toString())
 
