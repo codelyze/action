@@ -1,4 +1,4 @@
-import type * as util from '../../../src/util.ts'
+import type * as util from '../../../src/util'
 import { jest } from '@jest/globals'
 
 export const getContextInfo = jest.fn<typeof util.getContextInfo>()

@@ -19,7 +19,14 @@ interface Coverage {
 }
 
 interface Response {
-  check?: { linesFound: number; linesHit: number }
+  check?: {
+    linesFound: number
+    linesHit: number
+    functionsFound?: number
+    functionsHit?: number
+    branchesFound?: number
+    branchesHit?: number
+  }
   metadata?: { token: string }
 }
 

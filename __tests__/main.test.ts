@@ -3,11 +3,11 @@ import { dirname } from 'path'
 import { jest } from '@jest/globals'
 import type { CommitStatusResponse } from '../src/types'
 
-import * as coreMock from './fixture/mocks/core.ts'
-import * as githubMock from './fixture/mocks/github.ts'
-import * as covMock from './fixture/mocks/coverage.ts'
-import * as diffMock from './fixture/mocks/diff.ts'
-import * as utilMock from './fixture/mocks/util.ts'
+import * as coreMock from './fixture/mocks/core'
+import * as githubMock from './fixture/mocks/github'
+import * as covMock from './fixture/mocks/coverage'
+import * as diffMock from './fixture/mocks/diff'
+import * as utilMock from './fixture/mocks/util'
 
 jest.unstable_mockModule('@actions/core', () => coreMock)
 jest.unstable_mockModule('@actions/github', () => githubMock)

@@ -1,10 +1,10 @@
 import { jest } from '@jest/globals'
 import type { DiffCoverageOutput } from '../src/diff'
 
-import * as coreMock from './fixture/mocks/core.ts'
-import * as githubMock from './fixture/mocks/github.ts'
-import * as codelyzeMock from './fixture/mocks/codelyze.ts'
-import * as utilMock from './fixture/mocks/util.ts'
+import * as coreMock from './fixture/mocks/core'
+import * as githubMock from './fixture/mocks/github'
+import * as codelyzeMock from './fixture/mocks/codelyze'
+import * as utilMock from './fixture/mocks/util'
 
 jest.unstable_mockModule('@actions/core', () => coreMock)
 jest.unstable_mockModule('@actions/github', () => githubMock)

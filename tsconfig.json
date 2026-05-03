@@ -17,16 +17,12 @@
     "outDir": "./dist",
     "pretty": true,
     "resolveJsonModule": true,
+    "rootDir": ".",
     "strict": true,
     "strictNullChecks": true,
-    "target": "ES2022"
+    "target": "ES2022",
+    "types": ["node", "jest"]
   },
-  "exclude": ["coverage", "dist", "node_modules"],
-  "include": [
-    "src",
-    "__tests__",
-    "eslint.config.mjs",
-    "jest.config.js",
-    "rollup.config.ts"
-  ]
+  "exclude": ["__tests__", "coverage", "dist", "node_modules"],
+  "include": ["src", "eslint.config.mjs", "jest.config.js", "rollup.config.ts"]
 }

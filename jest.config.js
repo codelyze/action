@@ -21,7 +21,6 @@ export default {
   // },
   extensionsToTreatAsEsm: ['.ts'],
   moduleFileExtensions: ['ts', 'js'],
-  preset: 'ts-jest',
   reporters: ['default'],
   resolver: 'ts-jest-resolver',
   testEnvironment: 'node',
@@ -31,7 +30,7 @@ export default {
     '^.+\\.ts$': [
       'ts-jest',
       {
-        tsconfig: 'tsconfig.json',
+        tsconfig: 'tsconfig.jest.json',
         useESM: true
       }
     ]
