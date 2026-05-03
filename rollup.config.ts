@@ -12,7 +12,11 @@ const config = {
     format: 'es',
     sourcemap: true
   },
-  plugins: [typescript(), nodeResolve({ preferBuiltins: true }), commonjs()]
+  plugins: [
+    typescript({ exclude: ['__tests__/**'] }),
+    nodeResolve({ preferBuiltins: true }),
+    commonjs()
+  ]
 }
 
 export default config
