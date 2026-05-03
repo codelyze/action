@@ -119,5 +119,12 @@ describe('action', () => {
       (call: unknown[]) => call[0] === 'patch'
     )
     expect(patchCalls).toHaveLength(0)
+
+    const outputKeys = coreMock.setOutput.mock.calls.map(
+      (call: unknown[]) => call[0]
+    )
+    expect(outputKeys).toContain('coverage')
+    expect(outputKeys).toContain('difference')
+    expect(outputKeys).not.toContain('patch')
   })
 })

@@ -33780,8 +33780,8 @@ const createCommitStatus = async (props) => {
 const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, shouldAddAnnotation = true, threshold = 0, differenceThreshold = 0, patchThreshold = 0, emptyPatch = false }) => {
     const octokit = getOctokit(ghToken);
     const { repo, owner, ref, sha, compareSha } = context;
-    const hasDiff = diffCoverage !== null;
-    const { linesHit = 0, linesFound = 0, uncoveredHunks = [] } = diffCoverage ?? {};
+    const linesHit = diffCoverage?.linesHit ?? 0;
+    const linesFound = diffCoverage?.linesFound ?? 0;
     const { data: commit } = await octokit.rest.repos.getCommit({
         owner,
         repo,
@@ -33846,7 +33846,7 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
     });
     const diffCoverageRate = linesFound > 0 ? linesHit / linesFound : 0;
     let diffCoverageStatus;
-    if (hasDiff && !(emptyPatch && linesFound === 0)) {
+    if (diffCoverage && !(emptyPatch && linesFound === 0)) {
         const { data: commitStatusData } = await createCommitStatus({
             token: utoken ? utoken : ghToken,
             context,
@@ -33858,8 +33858,8 @@ const coverage = async ({ token, ghToken, summary, data, context, diffCoverage, 
         });
         diffCoverageStatus = commitStatusData;
     }
-    if (shouldAddAnnotation && hasDiff) {
-        addAnnotations(uncoveredHunks);
+    if (shouldAddAnnotation && diffCoverage) {
+        addAnnotations(diffCoverage.uncoveredHunks);
     }
     return {
         status,

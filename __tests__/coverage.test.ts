@@ -491,6 +491,48 @@ describe('coverage', () => {
       expect(projectCall).toBeDefined()
     })
 
+    it('should skip patch status when diffCoverage is null even if emptyPatch is true', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: null,
+        shouldAddAnnotation: false,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: true
+      })
+
+      const patchCall = utilMock.createCommitStatus.mock.calls.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (call: any[]) => call[0].commitContext === 'codelyze/patch'
+      )
+      expect(patchCall).toBeUndefined()
+    })
+
+    it('should skip annotations when diffCoverage is null', async () => {
+      const { coverage } = await import('../src/coverage')
+      await coverage({
+        token: 'test',
+        ghToken: 'gh-test',
+        summary: createMockSummary(50, 100),
+        data: createMockLcov(),
+        context: createMockContext(),
+        diffCoverage: null,
+        shouldAddAnnotation: true,
+        threshold: 0,
+        differenceThreshold: 0,
+        patchThreshold: 0,
+        emptyPatch: false
+      })
+
+      expect(coreMock.warning).not.toHaveBeenCalled()
+    })
+
     it('should use "unknown" in project status description when compareSha is undefined', async () => {
       const { coverage } = await import('../src/coverage')
       await coverage({
