@@ -1,0 +1,6 @@
+# undici (transitive dep via @actions/*; pinned by overrides) — no fix published in 6.x yet.
+# Revisit and remove entries as fixed versions become available.
+CVE-2026-16728
+CVE-2026-16729
+CVE-2026-11525
+CVE-2026-6733
